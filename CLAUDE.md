@@ -21,12 +21,20 @@ You may create new files only inside the `output/` folder.
 
 Use only:
 
-1. Customer Service Message Pack.xlsx, sheet "Messages 2-13 Mar"
+1. **Everything in the `sources/` folder**, read fresh on every run. New emails are added there automatically.
+   - `sources/shared-inbox/`, `sources/amazon/`, `sources/kickstarter/`
+   - Each folder's `_index.csv` is the master list of its messages. Read every row, then the message files it points to.
+   - If a message file exists but isn't in `_index.csv`, or a row points to a missing file, flag it: "UNSURE: index and folder don't match".
+   - Never assume how many messages there are. Count them on every run and report the count per folder.
+   - If a new subfolder appears in `sources/`, don't read it. Flag it to Ivs.
 2. D08-05 Policy Decided (current policy, effective 18 Mar 2026)
-3. A proposed policy change, only if the task gives one, and always labelled "Pending Lena's approval. Not in force."
+3. D08-06 Marco's note (explains the `sources/` folders)
+4. A proposed policy change, only if the task gives one, and always labelled "Pending Lena's approval. Not in force."
 
 Ignore D08-03 and Lena's old saved Gmail reply. Both are outdated.
 Use no outside knowledge. If the sources don't answer something, write "UNSURE: not in sources".
+
+**Run time:** at the start of every run, write the date and time of the run at the top of the output. Use it as the end point for "no reply" waiting time and for days open.
 
 ## 3. When you are not sure
 
@@ -57,7 +65,7 @@ Urgency measures response time only, so the team can see which emails missed the
 - Several emails, no reply to any: the clock starts at the first of them.
 - Same conversation = same order number or same sender.
 
-**When the clock stops:** at our first reply. If "Answered by" = "No reply", count to the end of the pack (end of Friday 13 March 2026). Show it as e.g. "High (28.2 h waiting, no reply)".
+**When the clock stops:** at our first reply. If "Answered by" = "No reply" (or the index shows no reply), count to the run time. Show it as e.g. "High (28.2 h waiting, no reply)".
 
 **Earlier emails not in the pack:** if a message says the customer wrote before (e.g. "second time asking") but the earlier email isn't in the pack, count from this message and add the flag "UNSURE: earlier emails not in pack, real wait is longer". Never guess the earlier date.
 
@@ -65,7 +73,7 @@ Urgency measures response time only, so the team can see which emails missed the
 
 - A case opens when the customer's first email arrives.
 - Only a person closes a case, by filling in "Closed by" and "Closed date". The agent always leaves both blank.
-- Days open = from the first email to "Closed date", or to the end of the pack (end of Friday 13 March 2026) if still open.
+- Days open = from the first email to "Closed date", or to the run time if still open.
 - Count calendar days (weekends included), to one decimal place, e.g. "11.6".
 
 Threats, repeat customers and upset customers go in the Flags column, never in Urgency.
@@ -76,3 +84,4 @@ End every run with: rows processed, files created, and any rule from section 1 t
 | Date | What changed | Why | Tests re-run? | Owner |
 |---|---|---|---|---|
 | [date] | First version | Test 2 failed: no CLAUDE.md in repo | [yes/no] | Ivs |
+| [date] | Sources = everything in `sources/`; end point = run time instead of 13 Mar | New emails arrive in `sources/` automatically (D08-06) | [yes/no] | Ivs |
