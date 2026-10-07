@@ -1,0 +1,2072 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tannerhill Inbox Sorter</title>
+<style>
+:root{
+  --bg:#f6f6f4; --panel:#ffffff; --text:#1d1f21; --muted:#6b6f75; --line:#dcdcd8;
+  --accent:#2f5d8a; --banner-bg:#fff4c2; --banner-text:#5a4600; --banner-line:#e8cf63;
+  --vh:#d03b3b; --hi:#ec835a; --no:#8a8f96; --ok:#2e8b57; --ok-bg:#e3f4ea; --tag:#eef0f2;
+  --unsure:#7b8088; --hover:#f0f3f7; --on-accent:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15171a; --panel:#1e2125; --text:#e6e7e9; --muted:#9aa0a8; --line:#33383e;
+    --accent:#7fb0e0; --banner-bg:#3b3310; --banner-text:#f3df8e; --banner-line:#6b5a17;
+    --no:#9aa0a8; --ok:#5cc28a; --ok-bg:#183326; --tag:#2a2e33; --unsure:#9aa0a8; --hover:#262a30; --on-accent:#0d1a26;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15171a; --panel:#1e2125; --text:#e6e7e9; --muted:#9aa0a8; --line:#33383e;
+  --accent:#7fb0e0; --banner-bg:#3b3310; --banner-text:#f3df8e; --banner-line:#6b5a17;
+  --no:#9aa0a8; --ok:#5cc28a; --ok-bg:#183326; --tag:#2a2e33; --unsure:#9aa0a8; --hover:#262a30; --on-accent:#0d1a26;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1200px;margin:0 auto;padding:16px}
+header{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+h1{margin:0;font-size:1.6rem}
+.sub{color:var(--muted);font-size:.9rem;margin-top:2px}
+.times{font-size:.9rem;margin-top:4px}
+.times .pretend{color:var(--muted);font-size:.8rem}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{background:var(--hover)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+button.danger{border-color:var(--vh);color:var(--vh)}
+.banner{background:var(--banner-bg);color:var(--banner-text);border:1px solid var(--banner-line);border-radius:8px;padding:10px 14px;margin:14px 0;font-weight:600}
+.issues{border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.9rem}
+.issues.has{border-color:var(--hi)}
+.issues h2{font-size:1rem;margin:0 0 4px}
+.issues ul{margin:4px 0 0;padding-left:20px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px;overflow-x:auto}
+.tabs button{border:none;border-bottom:3px solid transparent;border-radius:0;background:none;padding:8px 14px;white-space:nowrap}
+.tabs button[aria-selected="true"]{border-bottom-color:var(--accent);font-weight:600}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));gap:8px;margin-bottom:14px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-align:left}
+.tile .n{font-size:1.5rem;font-weight:700;display:block}
+.tile .l{font-size:.8rem;color:var(--muted)}
+.tile.active{outline:2px solid var(--accent)}
+.filters{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-bottom:10px}
+.filters label{font-size:.75rem;color:var(--muted);display:flex;flex-direction:column;gap:2px}
+.filters input,.filters select,.form input,.form select,.form textarea{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;width:100%}
+.bar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:.85rem;color:var(--muted)}
+.tablewrap{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{position:sticky;top:0;background:var(--panel);cursor:pointer;white-space:nowrap;user-select:none}
+th .arr{color:var(--muted);font-size:.75rem}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--hover)}
+td.nowrap{white-space:nowrap}
+td.flags{min-width:280px}
+.pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:1px 9px;white-space:nowrap;font-weight:600}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--no);display:inline-block}
+.pill.vh{color:var(--vh);border-color:var(--vh)} .pill.vh .dot{background:var(--vh)}
+.pill.hi{color:var(--hi);border-color:var(--hi)} .pill.hi .dot{background:var(--hi)}
+.pill.no{color:var(--no)} .pill.no .dot{background:var(--no)}
+.pill.low{color:var(--accent)} .pill.low .dot{background:var(--accent)}
+.pill.un{color:var(--unsure);font-style:italic;font-weight:500}
+.pill.closed{color:var(--ok);background:var(--ok-bg);border-color:var(--ok)}
+.hrs{color:var(--muted);font-size:.8rem;margin-left:4px;white-space:nowrap}
+.tag{display:inline-block;background:var(--tag);border:1px solid transparent;border-radius:6px;padding:0 6px;margin:1px 2px 1px 0;font-size:.75rem}
+.tag.threat{border-color:var(--vh);color:var(--vh);font-weight:600}
+.unsure{font-style:italic;color:var(--unsure)}
+.muted{color:var(--muted)}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--text);width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px);padding:0}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+.dlg{padding:16px}
+.dlg h2{margin:0 0 4px;font-size:1.2rem}
+.kv{display:grid;grid-template-columns:140px 1fr;gap:4px 12px;font-size:.9rem;margin:10px 0}
+.kv dt{color:var(--muted)} .kv dd{margin:0}
+.msg{white-space:pre-wrap;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:.92rem}
+.closebox{border-top:1px solid var(--line);margin-top:14px;padding-top:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.closebox label{display:flex;flex-direction:column;font-size:.75rem;color:var(--muted);gap:2px}
+.closebox select,.closebox input{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.form{display:grid;gap:10px}
+.form label{display:flex;flex-direction:column;gap:2px;font-size:.8rem;color:var(--muted)}
+.form .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form textarea{min-height:140px;resize:vertical}
+.note{background:var(--banner-bg);color:var(--banner-text);border:1px solid var(--banner-line);border-radius:6px;padding:6px 10px;font-size:.85rem;font-weight:600}
+.ok{color:var(--ok);font-weight:600} .bad{color:var(--vh);font-weight:600}
+.rules h2{font-size:1.05rem;margin:18px 0 6px} .rules ul{margin:0;padding-left:20px} .rules li{margin:2px 0}
+.rules table{font-size:.85rem;margin-top:4px}
+.small{font-size:.8rem}
+@media (max-width:760px){
+  .grid2,.form .row{grid-template-columns:1fr}
+  .kv{grid-template-columns:1fr} .kv dt{margin-top:6px}
+  h1{font-size:1.35rem}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Tannerhill Inbox Sorter</h1>
+    <div class="sub">Sources: sources/ (shared-inbox, amazon, kickstarter) · Policy: D08-05</div>
+    <div class="times" id="times"></div>
+  </div>
+  <button id="themeBtn" type="button">Theme: system</button>
+</header>
+
+<div class="banner">DRAFT - pending Lena's approval. Sort only: this page never drafts or sends a reply, and never decides a claim.</div>
+
+<div class="issues" id="issues"></div>
+
+<nav class="tabs" role="tablist">
+  <button role="tab" aria-selected="true" data-tab="inbox">Inbox</button>
+  <button role="tab" aria-selected="false" data-tab="test">Test a message</button>
+  <button role="tab" aria-selected="false" data-tab="rules">Rules</button>
+</nav>
+
+<!-- TAB 1 -->
+<section id="tab-inbox">
+  <div class="tiles" id="tiles"></div>
+  <div class="filters">
+    <label>Search<input id="fSearch" type="search" placeholder="ID, order, words…"></label>
+    <label>Folder<select id="fFolder"></select></label>
+    <label>In charge<select id="fOwner"></select></label>
+    <label>Category<select id="fCat"></select></label>
+    <label>Urgency<select id="fUrg"></select></label>
+    <label>Flag<select id="fFlag"></select></label>
+    <label>Case<select id="fCase"><option value="">All</option><option>Open</option><option>Closed</option></select></label>
+    <label>Case opened from<input id="fFrom" type="date"></label>
+    <label>Case opened to<input id="fTo" type="date"></label>
+  </div>
+  <div class="bar">
+    <span id="shown"></span>
+    <button type="button" id="resetBtn">Reset filters</button>
+    <span style="flex:1"></span>
+    <span>Closes are saved in this browser only.</span>
+    <button type="button" id="dlBtn">Download closes (CSV)</button>
+    <button type="button" id="clearBtn" class="danger">Clear all closes</button>
+  </div>
+  <div class="tablewrap">
+    <table>
+      <thead><tr id="thead"></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- TAB 2 -->
+<section id="tab-test" hidden>
+  <p class="note">Sort only. No reply is drafted or sent.</p>
+  <div class="grid2">
+    <div class="card">
+      <form class="form" id="testForm" onsubmit="return false">
+        <label>Load a message<select id="tLoad"></select></label>
+        <div class="row">
+          <label>Channel<select id="tChannel"><option>Shared inbox</option><option>Amazon buyer messages</option><option>Kickstarter</option></select></label>
+          <label>Order #<input id="tOrder" placeholder="blank if none"></label>
+        </div>
+        <label>Subject<input id="tSubject"></label>
+        <label>Message<textarea id="tMessage"></textarea></label>
+        <div class="row">
+          <label>Replied?<select id="tReplied"><option value="no">No reply yet</option><option value="yes">Yes</option><option value="unknown">Not in sources</option></select></label>
+          <label>Weekday hours waiting<input id="tHours" type="number" min="0" step="0.1" value="0"></label>
+        </div>
+        <label>Days open<input id="tDays" type="number" min="0" step="0.1" value="0"></label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button type="button" class="primary" id="tRun">Sort this message</button>
+          <button type="button" id="tAll">Test all messages</button>
+        </div>
+      </form>
+    </div>
+    <div class="card" id="tResult"><p class="muted">Load a message or type one, then press "Sort this message". The checks are fixed keyword rules written in JavaScript, not AI.</p></div>
+  </div>
+  <div class="card" id="tAllResult" style="margin-top:16px" hidden></div>
+</section>
+
+<!-- TAB 3 -->
+<section id="tab-rules" class="rules" hidden>
+  <div class="card">
+    <h2>What this page does</h2>
+    <ul>
+      <li>Shows the last sort (<span class="js-sortfile"></span>), joined with each message from <code>sources/</code>.</li>
+      <li>Recalculates waiting time and days open every time the page opens.</li>
+      <li>Lets a person close or reopen a case. Closes are saved in this browser only.</li>
+      <li>Has a keyword tester that sorts one message using fixed rules from CLAUDE.md.</li>
+    </ul>
+    <h2>What it never does</h2>
+    <ul>
+      <li>Never drafts, suggests, queues or sends a reply. A person writes every reply.</li>
+      <li>Never approves or denies a warranty claim, return or refund.</li>
+      <li>Never changes an order, a refund, a price or a source file.</li>
+      <li>Never closes a case by itself, and never reassigns an owner.</li>
+      <li>Hides card numbers and security codes found in messages.</li>
+    </ul>
+    <h2>When it is not sure</h2>
+    <ul>
+      <li>It writes "UNSURE: &lt;reason&gt;" instead of picking the most likely answer.</li>
+      <li>If the sources don't answer something: "UNSURE: not in sources".</li>
+      <li>If the customer says they wrote before but that email isn't in the pack: "UNSURE: earlier emails not in pack, real wait is longer".</li>
+    </ul>
+    <h2>Who is in charge (CLAUDE.md 2b)</h2>
+    <table><thead><tr><th>Message</th><th>In charge</th></tr></thead><tbody>
+      <tr><td>Anything from the Kickstarter channel (overrides every other row)</td><td>Priya</td></tr>
+      <tr><td>Wholesale inquiry</td><td>Lena (quote nothing)</td></tr>
+      <tr><td>Everything else: order status, shipping, warranty, returns, refunds, billing, shipping damage, product questions, unclear messages</td><td>Marco</td></tr>
+    </tbody></table>
+    <p class="small">NOTE flags tell Marco to check with Lena: money ("D08-04 says Lena only"), shipping damage ("D08-05 says shipping damage comes to Lena"), third warranty claim in a year. A person can reassign any case on the dashboard.</p>
+    <p class="small unsure" id="ownerWarn"></p>
+    <h2>Urgency bands (weekday hours only, Saturday and Sunday removed)</h2>
+    <table><thead><tr><th>Status</th><th>When</th></tr></thead><tbody>
+      <tr><td><span class="pill low"><span class="dot"></span>Low: Responded</span></td><td>We have replied ("Answered by" names a person)</td></tr>
+      <tr><td><span class="pill no"><span class="dot"></span>Normal</span></td><td>No reply, waiting 0 to 12 hours</td></tr>
+      <tr><td><span class="pill hi"><span class="dot"></span>High</span></td><td>No reply, waiting more than 12, up to 36 hours</td></tr>
+      <tr><td><span class="pill vh"><span class="dot"></span>Very High</span></td><td>No reply, waiting more than 36 hours</td></tr>
+      <tr><td><span class="pill un"><span class="dot"></span>UNSURE</span></td><td>Reply data is not in sources. Hours since clock start are still shown.</td></tr>
+    </tbody></table>
+    <p class="small">The clock starts at the customer's first email after our last reply (same order number or same sender) and stops at our first reply. With no reply it runs to now. Threats, repeat and upset customers go in Flags, never in Urgency.</p>
+    <h2>Case opened and days open</h2>
+    <ul>
+      <li>Case opened = the customer's earliest email in the same conversation found in <code>sources/</code> (ET).</li>
+      <li>Days open = calendar days (weekends included) from Case opened to Closed date, or to now if still open. One decimal place.</li>
+      <li>Only a person closes a case, by picking "Closed by" and "Closed date".</li>
+    </ul>
+    <h2>Missing info (D08-05, before anyone decides a claim)</h2>
+    <ul>
+      <li>Warranty: order number (or name + delivery ZIP), when it arrived, photos (fault + whole item; cooking surface for cast iron), what happened in their words (for cast iron, how it was washed and stored).</li>
+      <li>Return: delivery date; unused and in original packaging. Amazon orders follow Amazon's window.</li>
+    </ul>
+    <h2>Who it flags to</h2>
+    <table><thead><tr><th>What</th><th>Flag to</th><th>Cover</th></tr></thead><tbody>
+      <tr><td>Unclear what the customer wants</td><td>Marco</td><td>Lena</td></tr>
+      <tr><td>Warranty or return edge case</td><td>Marco (D08-05)</td><td>Lena</td></tr>
+      <tr><td>Shipping damage (carrier vs us not decided)</td><td>Lena</td><td>Marco</td></tr>
+      <tr><td>Wholesale inquiry (quote nothing)</td><td>Lena</td><td>Lena</td></tr>
+      <tr><td>Threat (review, A-to-Z claim, chargeback, legal)</td><td>Lena</td><td>Marco</td></tr>
+      <tr><td>Product detail not in sources</td><td>Priya</td><td>Lena</td></tr>
+      <tr><td>Request that conflicts with CLAUDE.md</td><td>Ivs</td><td>Lena</td></tr>
+    </tbody></table>
+    <h2>Source folders</h2>
+    <ul id="folderList"></ul>
+    <p class="small">Each folder's <code>_index.csv</code> is the master list. A file missing from the index, or an index row with no file, is shown in Data issues. New subfolders are not read; they are flagged to Ivs.</p>
+    <h2>Policy status</h2>
+    <ul>
+      <li>D08-05 Policy Decided is the current policy, effective 18 Mar 2026.</li>
+      <li>D08-03 and Lena's old saved Gmail reply are outdated and not used.</li>
+      <li>No proposed policy change is loaded. Any proposal would be labelled "Pending Lena's approval. Not in force."</li>
+    </ul>
+  </div>
+</section>
+</div>
+
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+
+<script>
+const DATA = {
+"sortFile": "output/test_sort_results.md",
+"runTime": "2026-03-18 14:00",
+"notes": [
+"\"Answered by\" and \"First response (hours)\" are not in `sources/` for CS-01 to CS-31, so their urgency is UNSURE. D08-06 says Marco has not answered the messages from 14 Mar on, so those count as no reply to the run time.",
+"Clock start = first customer email after our last reply in the same conversation (same order number or same sender). Days open = calendar days from Case opened to the run time.",
+"In charge follows how the team works today (Priya: pre-sale, product, Kickstarter; Marco: order status; Lena: warranty, returns, money, wholesale, shipping damage). Edge cases are flagged to Marco per D08-05. UNSURE: owner map is not written in D08-05.",
+"Closed by and Closed date are left blank. Only a person closes a case."
+],
+"sortRows": [
+{
+"id": "CS-01",
+"channel": "Kickstarter",
+"folder": "kickstarter",
+"order": "none",
+"category": "Campaign news",
+"owner": "Priya",
+"missing": "n/a",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (292.3 h since clock start)",
+"caseOpened": "2026-03-02 09:40",
+"daysOpen": "16.2",
+"clockStart": "2026-03-02 09:40",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-02",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "113-2285019-4471632",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (290.9 h since clock start)",
+"caseOpened": "2026-03-02 11:05",
+"daysOpen": "16.1",
+"clockStart": "2026-03-02 11:05",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-03",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "none",
+"category": "Product inquiry",
+"owner": "Priya",
+"missing": "n/a",
+"flags": "UNSURE: not in sources (fuel type, tank size); flag to Priya",
+"urgency": "UNSURE: reply data not in sources (288.6 h since clock start)",
+"caseOpened": "2026-03-02 13:22",
+"daysOpen": "16.0",
+"clockStart": "2026-03-02 13:22",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-04",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-11874",
+"category": "Warranty",
+"owner": "Lena",
+"missing": "Delivery date (says \"September\" only); photo of whole item (photos attached, not confirmed); what happened: how it was used when it warped",
+"flags": "UNSURE: edge case (warping could be a fault or fire damage); flag to Marco (D08-05)",
+"urgency": "UNSURE: reply data not in sources (285.2 h since clock start)",
+"caseOpened": "2026-03-02 16:48",
+"daysOpen": "15.9",
+"clockStart": "2026-03-02 16:48",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-05",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14371",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (269.8 h since clock start)",
+"caseOpened": "2026-03-03 08:15",
+"daysOpen": "15.2",
+"clockStart": "2026-03-03 08:15",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-06",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14219",
+"category": "Return",
+"owner": "Lena",
+"missing": "Delivery date (gives order date only); whether unused and in original packaging",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (265.5 h since clock start)",
+"caseOpened": "2026-03-03 12:30",
+"daysOpen": "15.1",
+"clockStart": "2026-03-03 12:30",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-07",
+"channel": "Kickstarter",
+"folder": "kickstarter",
+"order": "none",
+"category": "Campaign news",
+"owner": "Priya",
+"missing": "n/a",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (258.1 h since clock start)",
+"caseOpened": "2026-03-03 19:55",
+"daysOpen": "14.8",
+"clockStart": "2026-03-03 19:55",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-08",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14340",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (244.0 h since clock start)",
+"caseOpened": "2026-03-04 10:02",
+"daysOpen": "14.2",
+"clockStart": "2026-03-04 10:02",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-09",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "114-0287756-9913480",
+"category": "Warranty",
+"owner": "Lena",
+"missing": "Delivery date; photos (crack, whole item, cooking surface); washing and storage",
+"flags": "UNSURE: edge case (fell off a tailgate, possible accidental damage); flag to Marco (D08-05). UNSURE: CS-34 shows a reply was sent; who and when not in sources",
+"urgency": "UNSURE: reply time not in sources",
+"caseOpened": "2026-03-04 14:37",
+"daysOpen": "14.0",
+"clockStart": "2026-03-04 14:37",
+"answeredBy": "UNSURE: reply sent (see CS-34), who and when not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-10",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "none",
+"category": "Product inquiry",
+"owner": "Priya",
+"missing": "n/a",
+"flags": "UNSURE: not in sources (whether pre-seasoned, care steps); flag to Priya",
+"urgency": "UNSURE: reply data not in sources (232.8 h since clock start)",
+"caseOpened": "2026-03-04 21:10",
+"daysOpen": "13.7",
+"clockStart": "2026-03-04 21:10",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-11",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "114-7730281-5520947",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (222.3 h since clock start)",
+"caseOpened": "2026-03-05 07:44",
+"daysOpen": "13.3",
+"clockStart": "2026-03-05 07:44",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-12",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-13947",
+"category": "Return",
+"owner": "Lena",
+"missing": "Delivery date (says \"about five weeks ago\" for the order)",
+"flags": "UNSURE: inside or outside 30 days depends on delivery date",
+"urgency": "UNSURE: reply data not in sources (218.7 h since clock start)",
+"caseOpened": "2026-03-05 11:18",
+"daysOpen": "13.1",
+"clockStart": "2026-03-05 11:18",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-13",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "113-6619027-3384410",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "REPEAT: \"third time asking\". UPSET: missed son's birthday. UNSURE: earlier emails not in pack, real wait is longer",
+"urgency": "UNSURE: reply data not in sources (207.9 h since clock start)",
+"caseOpened": "2026-03-05 22:05 (UNSURE: earlier emails not in pack)",
+"daysOpen": "12.7",
+"clockStart": "2026-03-05 22:05",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-14",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14356",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (196.5 h since clock start)",
+"caseOpened": "2026-03-06 09:31",
+"daysOpen": "12.2",
+"clockStart": "2026-03-06 09:31",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-15",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-13421",
+"category": "Warranty",
+"owner": "Lena",
+"missing": "Delivery date (says \"two months\"); photos (rust, whole item, cooking surface); storage",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (190.8 h since clock start)",
+"caseOpened": "2026-03-06 15:12",
+"daysOpen": "11.9",
+"clockStart": "2026-03-06 15:12",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-16",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "none",
+"category": "Wholesale",
+"owner": "Lena",
+"missing": "n/a",
+"flags": "WHOLESALE: quote nothing; flag to Lena. Buyer's deadline 20 Mar",
+"urgency": "UNSURE: reply data not in sources (189.3 h since clock start)",
+"caseOpened": "2026-03-06 16:40",
+"daysOpen": "11.9",
+"clockStart": "2026-03-06 16:40",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-17",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "112-9046623-1187054",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (182.0 h since clock start)",
+"caseOpened": "2026-03-07 10:26",
+"daysOpen": "11.1",
+"clockStart": "2026-03-07 10:26",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-18",
+"channel": "Kickstarter",
+"folder": "kickstarter",
+"order": "none",
+"category": "Product inquiry + Warranty",
+"owner": "UNSURE: Priya or Lena",
+"missing": "If it becomes a claim: order number or name + ZIP; delivery date; photos; what happened",
+"flags": "TWO TOPICS. UNSURE: not in sources (whether the griddle plate fits the standard Trailhead); flag to Priya",
+"urgency": "UNSURE: reply data not in sources (182.0 h since clock start)",
+"caseOpened": "2026-03-07 18:03",
+"daysOpen": "10.8",
+"clockStart": "2026-03-07 18:03",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-19",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "112-1843307-2256618",
+"category": "Warranty",
+"owner": "Lena",
+"missing": "Delivery date (says \"January last year\"); photos (ignition, whole item); what happened",
+"flags": "UNSURE: edge case (about 14 months: past 12, inside the 15-month exception); flag to Marco (D08-05)",
+"urgency": "UNSURE: reply data not in sources (182.0 h since clock start)",
+"caseOpened": "2026-03-08 20:14",
+"daysOpen": "9.7",
+"clockStart": "2026-03-08 20:14",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-20",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "111-3378104-6092213",
+"category": "Billing",
+"owner": "Lena",
+"missing": "n/a",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (173.1 h since clock start)",
+"caseOpened": "2026-03-09 08:52",
+"daysOpen": "9.2",
+"clockStart": "2026-03-09 08:52",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-21",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14288",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "UPSET: quotes the 1-2 business days promise",
+"urgency": "UNSURE: reply data not in sources (168.3 h since clock start)",
+"caseOpened": "2026-03-09 13:40",
+"daysOpen": "9.0",
+"clockStart": "2026-03-09 13:40",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-22",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "none",
+"category": "Product inquiry",
+"owner": "Priya",
+"missing": "n/a",
+"flags": "UNSURE: not in sources (induction use); flag to Priya",
+"urgency": "UNSURE: reply data not in sources (164.6 h since clock start)",
+"caseOpened": "2026-03-09 17:25",
+"daysOpen": "8.9",
+"clockStart": "2026-03-09 17:25",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-23",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-13918",
+"category": "Warranty",
+"owner": "Lena",
+"missing": "Delivery date (says \"six weeks old\"); photos (bent leg, whole table); what happened",
+"flags": "UNSURE: edge case (bent leg could be a fault or accidental damage); flag to Marco (D08-05)",
+"urgency": "UNSURE: reply data not in sources (148.8 h since clock start)",
+"caseOpened": "2026-03-10 09:10",
+"daysOpen": "8.2",
+"clockStart": "2026-03-10 09:10",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-24",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "112-5503981-7746129",
+"category": "Refund/cancellation + Shipping/order status",
+"owner": "UNSURE: Lena or Marco",
+"missing": "n/a",
+"flags": "TWO TOPICS",
+"urgency": "UNSURE: reply data not in sources (146.0 h since clock start)",
+"caseOpened": "2026-03-10 12:02",
+"daysOpen": "8.1",
+"clockStart": "2026-03-10 12:02",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-25",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14305",
+"category": "UNSURE: message doesn't say what the customer is waiting for",
+"owner": "UNSURE: depends on category",
+"missing": "n/a",
+"flags": "REPEAT: \"second time asking\". UNSURE: earlier emails not in pack, real wait is longer; flag to Marco",
+"urgency": "UNSURE: reply data not in sources (142.4 h since clock start)",
+"caseOpened": "2026-03-10 15:33 (UNSURE: earlier emails not in pack)",
+"daysOpen": "7.9",
+"clockStart": "2026-03-10 15:33",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-26",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "none",
+"category": "Product inquiry",
+"owner": "Priya",
+"missing": "n/a",
+"flags": "UNSURE: not in sources (Deluxe vs Basic differences); flag to Priya",
+"urgency": "UNSURE: reply data not in sources (123.2 h since clock start)",
+"caseOpened": "2026-03-11 10:45",
+"daysOpen": "7.1",
+"clockStart": "2026-03-11 10:45",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-27",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14468",
+"category": "Shipping damage",
+"owner": "Lena",
+"missing": "n/a",
+"flags": "UNSURE: D08-05 has not decided carrier vs us; flag to Lena",
+"urgency": "UNSURE: reply data not in sources (119.7 h since clock start)",
+"caseOpened": "2026-03-11 14:20",
+"daysOpen": "7.0",
+"clockStart": "2026-03-11 14:20",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-28",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "111-5927730-4418856",
+"category": "Shipping/order status + Refund/cancellation",
+"owner": "UNSURE: Marco or Lena",
+"missing": "n/a",
+"flags": "THREAT: 1-star reviews, A-to-Z claim, chargeback; flag to Lena. TWO TOPICS. REPEAT: \"fourth message\". UPSET. UNSURE: earlier emails not in pack, real wait is longer",
+"urgency": "UNSURE: reply data not in sources (112.4 h since clock start)",
+"caseOpened": "2026-03-11 21:37 (UNSURE: earlier emails not in pack)",
+"daysOpen": "6.7",
+"clockStart": "2026-03-11 21:37",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-29",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14212",
+"category": "Warranty",
+"owner": "Lena",
+"missing": "Delivery date (says \"three weeks old\"); photos (handle, whole pot); what happened",
+"flags": "UNSURE: edge case (loose handle could be normal wear or a fault); flag to Marco (D08-05)",
+"urgency": "UNSURE: reply data not in sources (98.8 h since clock start)",
+"caseOpened": "2026-03-12 11:09",
+"daysOpen": "6.1",
+"clockStart": "2026-03-12 11:09",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-30",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "113-8840215-6627301",
+"category": "Return",
+"owner": "Lena",
+"missing": "Delivery date; photos (boxed item)",
+"flags": "UNSURE: Amazon's return window not in sources",
+"urgency": "UNSURE: reply data not in sources (90.2 h since clock start)",
+"caseOpened": "2026-03-12 19:48",
+"daysOpen": "5.8",
+"clockStart": "2026-03-12 19:48",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-31",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14402",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "none",
+"urgency": "UNSURE: reply data not in sources (75.5 h since clock start)",
+"caseOpened": "2026-03-13 10:30",
+"daysOpen": "5.1",
+"clockStart": "2026-03-13 10:30",
+"answeredBy": "UNSURE: not in sources",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-32",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14519",
+"category": "Order request (new purchase)",
+"owner": "Lena",
+"missing": "Whether a replacement thermometer is sold (not in sources)",
+"flags": "NEVER ANSWERED. SENSITIVE: full card details in the message; do not copy or reuse them. UNSURE: not in sources (replacement thermometer for sale); flag to Priya",
+"urgency": "Very High (62.0 h waiting, no reply)",
+"caseOpened": "2026-03-14 09:12",
+"daysOpen": "4.2",
+"clockStart": "2026-03-14 09:12",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-33",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "114-3390118-7724509",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "NEVER ANSWERED. UPSET: \"that's not what you said last time\". UNSURE: earlier emails not in pack, real wait is longer",
+"urgency": "Very High (62.0 h waiting, no reply)",
+"caseOpened": "2026-03-14 14:38 (UNSURE: earlier emails not in pack)",
+"daysOpen": "4.0",
+"clockStart": "2026-03-14 14:38",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-34",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "114-0287756-9913480",
+"category": "Warranty",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "NEVER ANSWERED. REPEAT: follows CS-09. UPSET: asks for someone else to look. UNSURE: edge case, customer disputes the answer and quotes the Amazon listing; flag to Marco (D08-05)",
+"urgency": "Very High (62.0 h waiting, no reply)",
+"caseOpened": "2026-03-04 14:37",
+"daysOpen": "14.0",
+"clockStart": "2026-03-15 08:05",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-35",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14540",
+"category": "Shipping damage",
+"owner": "Lena",
+"missing": "n/a",
+"flags": "NEVER ANSWERED. UNSURE: D08-05 has not decided carrier vs us; flag to Lena",
+"urgency": "Very High (62.0 h waiting, no reply)",
+"caseOpened": "2026-03-15 11:50",
+"daysOpen": "3.1",
+"clockStart": "2026-03-15 11:50",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-36",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "none",
+"category": "Wholesale",
+"owner": "Lena",
+"missing": "n/a",
+"flags": "NEVER ANSWERED. REPEAT: follows CS-16. WHOLESALE: quote nothing; flag to Lena. Buyer's deadline Fri 20 Mar",
+"urgency": "Very High (189.3 h waiting, no reply)",
+"caseOpened": "2026-03-06 16:40",
+"daysOpen": "11.9",
+"clockStart": "2026-03-06 16:40",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-37",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "112-7745201-3398661",
+"category": "Warranty",
+"owner": "Lena",
+"missing": "Delivery date (says \"about three years ago\"); photos (handle, whole skillet, cooking surface); what happened; washing and storage",
+"flags": "NEVER ANSWERED. UNSURE: edge case, customer quotes a \"lifetime guarantee\" on the listing that D08-05 doesn't have; flag to Marco (D08-05)",
+"urgency": "Very High (42.3 h waiting, no reply)",
+"caseOpened": "2026-03-16 19:44",
+"daysOpen": "1.8",
+"clockStart": "2026-03-16 19:44",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-38",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-99120",
+"category": "Shipping/order status",
+"owner": "Marco",
+"missing": "n/a",
+"flags": "NEVER ANSWERED. UNSURE: order number TH-99120 is far outside the other TH- numbers; check it exists",
+"urgency": "High (27.8 h waiting, no reply)",
+"caseOpened": "2026-03-17 10:15",
+"daysOpen": "1.2",
+"clockStart": "2026-03-17 10:15",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-39",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "TH-14398",
+"category": "Warranty + Product inquiry",
+"owner": "UNSURE: Lena or Priya",
+"missing": "Delivery date (says \"since November\"); photos (hinge, whole grill); what happened",
+"flags": "NEVER ANSWERED. TWO TOPICS. UNSURE: edge case (stiff hinge could be normal wear or a fault); flag to Marco (D08-05). UNSURE: not in sources (whether the Deluxe kit includes the carry bag); flag to Priya",
+"urgency": "High (25.0 h waiting, no reply)",
+"caseOpened": "2026-03-17 13:02",
+"daysOpen": "1.0",
+"clockStart": "2026-03-17 13:02",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-40",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "none",
+"category": "Product inquiry",
+"owner": "Priya",
+"missing": "n/a",
+"flags": "NEVER ANSWERED. UNSURE: not in sources (pizza oven attachment or stone); flag to Priya",
+"urgency": "High (21.5 h waiting, no reply)",
+"caseOpened": "2026-03-17 16:30",
+"daysOpen": "0.9",
+"clockStart": "2026-03-17 16:30",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-41",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "none",
+"category": "UNSURE: automatic reply, no customer request",
+"owner": "UNSURE: not a customer message",
+"missing": "n/a",
+"flags": "NEVER ANSWERED. UNSURE: automated message; flag to Marco",
+"urgency": "Normal (8.0 h waiting, no reply)",
+"caseOpened": "2026-03-18 06:02",
+"daysOpen": "0.3",
+"clockStart": "2026-03-18 06:02",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-42",
+"channel": "Shared inbox",
+"folder": "shared-inbox",
+"order": "none",
+"category": "UNSURE: sales pitch, not a customer",
+"owner": "UNSURE: not a customer message",
+"missing": "n/a",
+"flags": "NEVER ANSWERED. UNSURE: marketing email; flag to Marco",
+"urgency": "Normal (5.2 h waiting, no reply)",
+"caseOpened": "2026-03-18 08:47",
+"daysOpen": "0.2",
+"clockStart": "2026-03-18 08:47",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-43",
+"channel": "Amazon buyer messages",
+"folder": "amazon",
+"order": "111-9028337-5541290",
+"category": "Warranty",
+"owner": "Lena",
+"missing": "Delivery date (says \"within six months of purchase\"); photos (fault, whole grill); what happened",
+"flags": "NEVER ANSWERED. THREAT: state attorney general complaint, 14-day deadline; flag to Lena. UNSURE: consumer protection law not in sources",
+"urgency": "Normal (1.6 h waiting, no reply)",
+"caseOpened": "2026-03-18 12:25",
+"daysOpen": "0.1",
+"clockStart": "2026-03-18 12:25",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+},
+{
+"id": "CS-44",
+"channel": "Kickstarter",
+"folder": "kickstarter",
+"order": "none",
+"category": "Kickstarter reward (missing item)",
+"owner": "Priya",
+"missing": "Name + delivery ZIP (no order number); pledge confirmation email",
+"flags": "NEVER ANSWERED. UNSURE: how 2024 campaign rewards are handled is not in sources; flag to Priya",
+"urgency": "Very High (39.8 h waiting, no reply)",
+"caseOpened": "2026-03-16 22:10",
+"daysOpen": "1.7",
+"clockStart": "2026-03-16 22:10",
+"answeredBy": "No reply (D08-06)",
+"closedBy": "",
+"closedDate": ""
+}
+],
+"messages": [
+{
+"id": "CS-04",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-02 16:48",
+"from": "dfoster@example.com",
+"subject": "Firebox warped",
+"order": "TH-11874",
+"message": "I bought the Trailhead grill in September. The firebox has warped so the lid doesn't sit flat any more. I've only used it maybe fifteen times. Photos attached.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-05",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-03 08:15",
+"from": "hana.t@example.com",
+"subject": "(no subject)",
+"order": "TH-14371",
+"message": "hi has this shipped yet",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-06",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-03 12:30",
+"from": "hugo.lindqvist@example.com",
+"subject": "Return",
+"order": "TH-14219",
+"message": "I ordered the basic kit and it's too small for what I need. Ordered 12 days ago. How do I return it?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-08",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-04 10:02",
+"from": "p.venkat@example.com",
+"subject": "Tracking not updating",
+"order": "TH-14340",
+"message": "The confirmation says shipped but the tracking hasn't moved in three days. Is it lost?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-12",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-05 11:18",
+"from": "yasmin.a@example.com",
+"subject": "Return - changed my mind",
+"order": "TH-13947",
+"message": "I'd like to return the windshield set, I've decided I don't need it. I think I ordered it about five weeks ago. Unopened.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-14",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-06 09:31",
+"from": "greg.solomon@example.com",
+"subject": "Order update?",
+"order": "TH-14356",
+"message": "It's been a week and I haven't heard anything. Is the order actually coming?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-15",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-06 15:12",
+"from": "aoife.mcg@example.com",
+"subject": "Rust",
+"order": "TH-13421",
+"message": "My skillet has rust spots after two months. Is this a defect? I washed it with soap the first couple of times, I didn't know you weren't supposed to.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-16",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-06 16:40",
+"from": "j.pike@ridgelineoutfitters.example.com",
+"subject": "Wholesale inquiry - Trailhead grill and camp kitchen kits",
+"order": "",
+"message": "Hi there,\n\nI'm the hard goods buyer at Ridgeline Outfitters. We have four stores in Colorado and Utah and we'd like to carry the Trailhead grill and the Deluxe camp kitchen kit this spring.\n\nCould you send your wholesale price list, minimum order, and payment terms? We're looking at around 60 grills and 40 kits for a first order, and we'd need them at our Denver warehouse before 15 April for our spring floor set. If you work through a distributor instead, just point me to them.\n\nWe lock our spring buys on 20 March, so a reply before then would be great.\n\nThanks,\nJordan Pike\nHard Goods Buyer, Ridgeline Outfitters",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-21",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-09 13:40",
+"from": "w.ackerman@example.com",
+"subject": "You said 1-2 days",
+"order": "TH-14288",
+"message": "Your site says orders ship in 1-2 business days. I ordered on 23 February and I've had nothing. Has it shipped or not?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-22",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-09 17:25",
+"from": "imogen.p@example.com",
+"subject": "Induction?",
+"order": "",
+"message": "Can I use the Dutch oven on an induction cooktop at home as well as over a fire?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-23",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-10 09:10",
+"from": "t.marchetti@example.com",
+"subject": "Table leg",
+"order": "TH-13918",
+"message": "One of the legs on the prep table has bent and it now wobbles badly. Six weeks old. I'm not heavy-handed with it.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-25",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-10 15:33",
+"from": "m.oyelaran@example.com",
+"subject": "Still waiting",
+"order": "TH-14305",
+"message": "Still waiting. Second time asking.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-27",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-11 14:20",
+"from": "f.oduya@example.com",
+"subject": "Arrived damaged",
+"order": "TH-14468",
+"message": "Box arrived crushed on one corner and the skillet has a chip out of the rim. Photos attached. Not sure if that's you or the carrier.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-29",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-12 11:09",
+"from": "nadia.h@example.com",
+"subject": "Handle loose",
+"order": "TH-14212",
+"message": "The handle on the large pot in the nesting set has come loose. Three weeks old. Happy to tighten it myself if you tell me how, or I'll send it back, whatever's easier.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-31",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-13 10:30",
+"from": "claire.d@example.com",
+"subject": "Skillet order",
+"order": "TH-14402",
+"message": "Hello, I ordered the 10 inch skillet on the 3rd. Any update? Not urgent, just curious.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-32",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-14 09:12",
+"from": "hollie.varga@example.com",
+"subject": "Replacement thermometer - card details",
+"order": "TH-14519",
+"message": "Hi, the probe thermometer that came with my kit has stopped reading. I don't want to make a warranty thing of it, I'd just rather buy a new one.\n\nCard is [card number hidden], exp [hidden], security code [hidden]. Take whatever it costs and send it to the address on the order.\n\nThanks, Hollie",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-35",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-15 11:50",
+"from": "d.okonkwo@example.com",
+"subject": "Arrived smashed",
+"order": "TH-14540",
+"message": "The prep table arrived this morning with one corner completely caved in. The driver didn't wait for me to check it. Photos attached.\n\nI don't know whether I'm meant to be talking to you or to the carrier about this. Can you tell me which, and who's paying for it?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-36",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-16 07:20",
+"from": "j.pike@ridgelineoutfitters.example.com",
+"subject": "Following up - wholesale, Ridgeline Outfitters",
+"order": "",
+"message": "Hi again,\n\nFollowing up on my email of the 6th. We lock our spring buys on Friday the 20th, so if I don't hear back before then I'll have to go with a different supplier for this season.\n\nI still need the wholesale price list, minimum order and payment terms. Same quantities as before, 60 grills and 40 kits, Denver warehouse before 15 April.\n\nIf there's a better person for me to speak to, please pass this along.\n\nJordan Pike\nHard Goods Buyer, Ridgeline Outfitters",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-38",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-17 10:15",
+"from": "marta.kovac@example.com",
+"subject": "Order TH-99120",
+"order": "TH-99120",
+"message": "Checking on order TH-99120, placed about two weeks ago. Nothing's arrived and I can't find a tracking email. Can you look it up?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-39",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-17 13:02",
+"from": "b.lindqvist@example.com",
+"subject": "Two things",
+"order": "TH-14398",
+"message": "Two questions in one, sorry.\n\nFirst, the lid hinge on my grill has gone stiff and squeaks badly. Had it since November. Is that something you'd look at?\n\nSecond, I'm thinking of getting the Deluxe kit for my brother's birthday in April. Does it come with the carry bag or is that separate?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-40",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-17 16:30",
+"from": "aaron.whitfield@example.com",
+"subject": "Pizza oven attachment",
+"order": "",
+"message": "Do you do a pizza oven attachment or a stone that fits the Trailhead? I've seen other brands doing them and yours looks like the right size. If not, any plans to?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-41",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-18 06:02",
+"from": "noreply@mailer.example.net",
+"subject": "Automatic reply: Your order has shipped",
+"order": "",
+"message": "This mailbox is not monitored. Please do not reply to this message.\n\nIf you need assistance, visit our help center.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-42",
+"folder": "shared-inbox",
+"channel": "Shared inbox",
+"received": "2026-03-18 08:47",
+"from": "growth@rankfirstdigital.example.com",
+"subject": "Quick question about Tannerhill's Amazon ranking",
+"order": "",
+"message": "Hi there,\n\nI was looking at your Amazon listings and noticed a few quick wins that could lift your organic ranking significantly. We've helped similar outdoor brands grow 3-4x in under six months.\n\nWould you be open to a 15 minute call this week? I can send over a free audit first.\n\nBest,\nDaniel\nRankFirst Digital",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-02",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-02 11:05",
+"from": "D. Kowalski",
+"subject": "Where is my order?",
+"order": "113-2285019-4471632",
+"message": "Ordered on the 26th and it still says preparing to ship. Can you check please.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-03",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-02 13:22",
+"from": "Amazon customer (pre-sale)",
+"subject": "Propane or charcoal?",
+"order": "",
+"message": "Is the Trailhead propane or charcoal? And if propane, what size tank does it take?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-09",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-04 14:37",
+"from": "K. Yilmaz",
+"subject": "Dutch oven cracked",
+"order": "114-0287756-9913480",
+"message": "The Dutch oven has a crack across the base. I should say it did come off the tailgate onto gravel, but it's cast iron, I didn't think that would do it.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-10",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-04 21:10",
+"from": "Amazon customer (pre-sale)",
+"subject": "Pre-seasoned?",
+"order": "",
+"message": "Does the skillet come pre-seasoned and what do I use to look after it?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-11",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-05 07:44",
+"from": "R. Mensah",
+"subject": "No tracking",
+"order": "114-7730281-5520947",
+"message": "There's no tracking number on my order. I need this by the 12th for a trip. Please advise.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-13",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-05 22:05",
+"from": "T. Ferreira",
+"subject": "THIRD TIME ASKING",
+"order": "113-6619027-3384410",
+"message": "I ordered the Trailhead grill on 16 February. I was told it would be here within a week. It is now March and I have nothing and no one has replied to my last two messages. This was for my son's birthday, which was on Saturday.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-17",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-07 10:26",
+"from": "J. Abadi",
+"subject": "when will i get this",
+"order": "112-9046623-1187054",
+"message": "when will i get this",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-19",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-08 20:14",
+"from": "B. Ostrowski",
+"subject": "Ignition dead",
+"order": "112-1843307-2256618",
+"message": "The push ignition on my Grill Pro has stopped working entirely. Bought it in January last year so it's fourteen months old. Do you cover this?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-20",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-09 08:52",
+"from": "L. Brennan",
+"subject": "Charged twice?",
+"order": "111-3378104-6092213",
+"message": "I think you charged me twice. There are two pending amounts on my card for the same order. Sort this out please.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-24",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-10 12:02",
+"from": "S. Nkemelu",
+"subject": "Cancel my order",
+"order": "112-5503981-7746129",
+"message": "Please cancel. I've waited nearly three weeks and I bought one elsewhere. I'd like a refund.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-26",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-11 10:45",
+"from": "Amazon customer (pre-sale)",
+"subject": "Deluxe vs Basic",
+"order": "",
+"message": "What's actually different between the Deluxe and Basic kitchen kits? The listings look nearly identical to me.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-28",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-11 21:37",
+"from": "M. Delacroix",
+"subject": "ABSOLUTELY UNACCEPTABLE - LAST CHANCE BEFORE REVIEW",
+"order": "111-5927730-4418856",
+"message": "This is my fourth message. Ordered 12 February. No grill, no refund, no reply from anyone. I have screenshots of every message. If I do not hear back today I am leaving a one star review on every listing you have, filing an A-to-Z claim, and disputing the charge with my bank. I have been more than patient. This is a joke.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-30",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-12 19:48",
+"from": "C. Nwachukwu",
+"subject": "Doesn't fit my setup",
+"order": "113-8840215-6627301",
+"message": "The prep table doesn't work with my van layout. Never used, still boxed. Can I send it back?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-33",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-14 14:38",
+"from": "N. Abramowicz",
+"subject": "Re: your message",
+"order": "114-3390118-7724509",
+"message": "Ok but that's not what you said last time. You told me it would be here by the end of the week and it's now a week past that. Which is it?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-34",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-15 08:05",
+"from": "K. Yilmaz",
+"subject": "Re: Dutch oven cracked",
+"order": "114-0287756-9913480",
+"message": "I'm not happy with that answer. You're saying it's not covered because I told you it came off the tailgate. If I hadn't mentioned that you'd have replaced it.\n\nI've read your Amazon listing and it says two year guarantee on cast iron. It doesn't say anything about accidents. I'd like someone else to look at this please.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-37",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-16 19:44",
+"from": "P. Serrano",
+"subject": "Lifetime guarantee",
+"order": "112-7745201-3398661",
+"message": "The handle has snapped off my skillet. I bought it about three years ago.\n\nYour listing says lifetime guarantee on cast iron so I'd like a replacement sent out please.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-43",
+"folder": "amazon",
+"channel": "Amazon buyer messages",
+"received": "2026-03-18 12:25",
+"from": "R. Castellanos",
+"subject": "Formal complaint - consumer protection law",
+"order": "111-9028337-5541290",
+"message": "My grill failed within six months of purchase. Under my state's consumer protection law, I am entitled to a repair, replacement or refund.\n\nI have contacted my state attorney general's consumer protection office, and they told me to put this in writing. I expect a response within 14 days before I escalate further.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-01",
+"folder": "kickstarter",
+"channel": "Kickstarter",
+"received": "2026-03-02 09:40",
+"from": "Backer #1107",
+"subject": "New campaign?",
+"order": "",
+"message": "It's been quiet on the page for a while. Is the new campaign still happening this spring? Can we get a date, even a rough one is fine.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-07",
+"folder": "kickstarter",
+"channel": "Kickstarter",
+"received": "2026-03-03 19:55",
+"from": "Backer #482",
+"subject": "Early bird?",
+"order": "",
+"message": "Any news on the new campaign? The prelaunch page says spring. Not chasing, I just want to make sure I get the early bird this time.",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-18",
+"folder": "kickstarter",
+"channel": "Kickstarter",
+"received": "2026-03-07 18:03",
+"from": "Backer #2291",
+"subject": "Griddle plate on the standard grill",
+"order": "",
+"message": "I backed the griddle plate last year. Does it fit the standard Trailhead or is it only meant for the Pro? Mine rocks a bit on my standard one and I don't want to warp it. Would that be covered if it does?",
+"answeredBy": null,
+"firstResponse": null
+},
+{
+"id": "CS-44",
+"folder": "kickstarter",
+"channel": "Kickstarter",
+"received": "2026-03-16 22:10",
+"from": "Backer #318",
+"subject": "Reward from the 2024 campaign",
+"order": "",
+"message": "I backed the camp kitchen campaign in 2024 at the two-kit tier. I only ever received one kit.\n\nI know it has been a long time and I don't have an order number because it came through Kickstarter. I do still have the pledge confirmation email if that helps. Is there anything you can do?",
+"answeredBy": null,
+"firstResponse": null
+}
+],
+"indexIssues": [],
+"extraFolders": []
+};
+
+/* ---------- time helpers (all times are ET wall clock, kept as naive UTC numbers) ---------- */
+const H = 3600e3, D = 86400e3;
+const pad = n => String(n).padStart(2, '0');
+function parseET(s){
+  const m = /(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/.exec(s || '');
+  return m ? Date.UTC(+m[1], m[2]-1, +m[3], +(m[4]||0), +(m[5]||0)) : null;
+}
+function fmtET(t){ const d = new Date(t); return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`; }
+function realNowET(){
+  try{
+    const p = new Intl.DateTimeFormat('en-US',{timeZone:'America/New_York',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+    const g = t => +p.find(x => x.type === t).value;
+    return Date.UTC(g('year'), g('month')-1, g('day'), g('hour') % 24, g('minute'));
+  }catch(e){ const d = new Date(); return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes()); }
+}
+/* Pretend clock: real 2026-10-07 is shown as 2026-03-18, real 2026-10-08 as 2026-03-19, and so on.
+   The time of day is kept. Never earlier than the last sort's run time. */
+const PRETEND = { realDay: '2026-10-07', pretendDay: '2026-03-18' };
+const PRETEND_OFFSET = parseET(PRETEND.realDay) - parseET(PRETEND.pretendDay);
+const RUN = parseET(DATA.runTime);
+const REAL_NOW = realNowET();
+const PRETEND_RAW = REAL_NOW - PRETEND_OFFSET;
+const NOW = Math.max(PRETEND_RAW, RUN);
+const TODAY = fmtET(NOW).slice(0, 10);
+
+function weekdayHours(a, b){
+  if (a == null || b == null || b <= a) return 0;
+  let t = 0, cur = a;
+  while (cur < b){
+    const day = Math.floor(cur / D) * D, next = Math.min(day + D, b), wd = new Date(day).getUTCDay();
+    if (wd !== 0 && wd !== 6) t += next - cur;
+    cur = next;
+  }
+  return t / H;
+}
+function band(h){ return h > 36 ? 'Very High' : h > 12 ? 'High' : 'Normal'; }
+
+/* ---------- storage ---------- */
+const STORE_KEY = 'tannerhill_closes_v1', THEME_KEY = 'tannerhill_theme';
+function loadCloses(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }catch(e){ return {}; } }
+function saveCloses(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(closes)); }catch(e){} }
+let closes = loadCloses();
+
+/* ---------- join sort rows with messages ---------- */
+const msgById = Object.fromEntries(DATA.messages.map(m => [m.id, m]));
+const sortById = Object.fromEntries(DATA.sortRows.map(r => [r.id, r]));
+const isPerson = s => /^(Lena|Marco|Priya)\b/.test(s || '');
+
+const ROWS = DATA.sortRows.map(r => {
+  const m = msgById[r.id] || {};
+  const answeredBy = m.answeredBy || r.answeredBy || 'UNSURE: not in sources';
+  const firstResponse = m.firstResponse != null ? m.firstResponse : null;
+  return Object.assign({}, r, {
+    received: m.received || '', subject: m.subject || '', message: m.message || '', from: m.from || '',
+    answeredBy, firstResponse, hasMessage: !!msgById[r.id],
+    caseOpenedT: parseET(r.caseOpened), clockStartT: parseET(r.clockStart || r.caseOpened),
+  });
+});
+
+function liveUrgency(r, now){
+  const ans = r.answeredBy || '';
+  if (isPerson(ans)){
+    const fr = r.firstResponse;
+    return { band:'Low: Responded', hours:null, text: fr != null && fr !== '' ? `Low: Responded (first reply ${(+fr).toFixed(1)} h)` : 'Low: Responded (first reply: UNSURE: not in sources)' };
+  }
+  if (/^no reply/i.test(ans)){
+    const h = weekdayHours(r.clockStartT, now), b = band(h);
+    return { band:b, hours:h, text:`${b} (${h.toFixed(1)} h waiting, no reply)` };
+  }
+  if (/reply sent/i.test(ans)) return { band:'UNSURE', hours:null, text:'UNSURE: reply time not in sources' };
+  const h = weekdayHours(r.clockStartT, now);
+  return { band:'UNSURE', hours:h, text:`UNSURE: reply data not in sources (${h.toFixed(1)} h since clock start)` };
+}
+function liveDays(r, now){
+  const c = closes[r.id];
+  let end = now;
+  if (c && c.date){ end = Math.min(parseET(c.date + ' 23:59'), now); }
+  return Math.max(0, (end - r.caseOpenedT) / D);
+}
+function refreshLive(){
+  ROWS.forEach(r => {
+    r.live = liveUrgency(r, NOW);
+    r.days = liveDays(r, NOW);
+    r.closed = !!closes[r.id];
+  });
+}
+
+/* ---------- flags ---------- */
+function splitFlags(s){
+  if (!s || /^none$/i.test(s.trim())) return [];
+  return s.split(/\.\s+(?=[A-Z][A-Z -]{2,}[:.]|[A-Z]{4,}\b)/).map(x => x.trim().replace(/\.$/, '')).filter(Boolean);
+}
+function tagHTML(t){
+  const cls = /^THREAT/.test(t) ? 'tag threat' : /^UNSURE/.test(t) ? 'tag unsure' : 'tag';
+  return `<span class="${cls}">${esc(t)}</span>`;
+}
+const FLAG_KEYS = ['THREAT','NEVER ANSWERED','REPEAT','UPSET','UNSURE','WHOLESALE','TWO TOPICS','SENSITIVE','NOTE'];
+
+/* ---------- render helpers ---------- */
+function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function maybeUnsure(s){ return /^UNSURE/.test(s || '') ? `<span class="unsure">${esc(s)}</span>` : esc(s); }
+function urgPill(u){
+  const cls = {'Very High':'vh','High':'hi','Normal':'no','Low: Responded':'low','UNSURE':'un'}[u.band] || 'no';
+  const word = u.band === 'UNSURE' ? 'UNSURE' : u.band;
+  let extra = '';
+  if (u.band === 'UNSURE') extra = u.hours != null ? `${u.hours.toFixed(1)} h since clock start, reply data not in sources` : 'reply time not in sources';
+  else if (u.hours != null) extra = `${u.hours.toFixed(1)} h waiting, no reply`;
+  else extra = u.text.replace(/^Low: Responded\s*/, '').replace(/^\(|\)$/g, '');
+  return `<span class="pill ${cls}" title="${esc(u.text)}"><span class="dot"></span>${esc(word)}</span><span class="hrs">${esc(extra)}</span>`;
+}
+function casePill(r){
+  if (r.closed){ const c = closes[r.id]; return `<span class="pill closed" title="Closed by ${esc(c.by)} on ${esc(c.date)}">Closed</span>`; }
+  return '<span class="muted">Open</span>';
+}
+const URG_RANK = {'Very High':5,'High':4,'Normal':3,'UNSURE':2,'Low: Responded':1};
+const ownerKey = o => /^(Lena|Marco|Priya)$/.test(o) ? o : (/^UNSURE/.test(o) ? 'UNSURE' : o);
+const catParts = c => /^UNSURE/.test(c) ? ['UNSURE'] : c.split(/\s*\+\s*/);
+
+/* ---------- data issues ---------- */
+function renderIssues(){
+  const list = [];
+  ROWS.filter(r => !r.hasMessage).forEach(r => list.push(`Sort row ${r.id} has no matching message in sources/.`));
+  DATA.messages.filter(m => !sortById[m.id]).forEach(m => list.push(`Message ${m.folder}/${m.id} is not in the last sort.`));
+  DATA.indexIssues.forEach(s => list.push(s));
+  DATA.extraFolders.forEach(f => list.push(`New subfolder sources/${f}/ was not read. Flag to Ivs.`));
+  ROWS.filter(r => r.hasMessage).forEach(r => {
+    const m = msgById[r.id];
+    if (m.folder !== r.folder) list.push(`${r.id}: sort says folder "${r.folder}", message is in "${m.folder}".`);
+    const so = /^none$/i.test(r.order) ? '' : r.order;
+    if ((m.order || '') !== so) list.push(`${r.id}: sort Order # "${r.order}" differs from _index.csv "${m.order || 'blank'}".`);
+  });
+  const el = document.getElementById('issues');
+  const notes = [];
+  const kStray = ROWS.filter(r => r.folder === 'kickstarter' && r.owner !== 'Priya');
+  const oldMap = ROWS.some(r => /^(Warranty|Return)$/.test(r.category) && r.owner === 'Lena');
+  if (oldMap || kStray.length) notes.push(`The last sort uses an older owner map (e.g. warranty and returns to Lena). CLAUDE.md 2b now says Kickstarter to Priya, wholesale to Lena, everything else to Marco. Owners shown are from the sort; see "Test a message" for the differences.`);
+  el.className = 'issues' + (list.length ? ' has' : '');
+  el.innerHTML = `<h2>Data issues (${list.length})</h2>` +
+    (list.length ? `<ul>${list.map(s => `<li>${maybeUnsure(s)}</li>`).join('')}</ul>` : `<div class="muted">None. Every sort row has a message and every message has a sort row (${ROWS.length} of each). Every _index.csv matches its folder.</div>`) +
+    (notes.length ? `<ul>${notes.map(s => `<li class="unsure">${esc(s)}</li>`).join('')}</ul>` : '');
+  document.getElementById('ownerWarn').textContent = notes.join(' ');
+}
+
+/* ---------- tiles ---------- */
+const FOLDERS = [...new Set(DATA.messages.map(m => m.folder).concat(DATA.sortRows.map(r => r.folder)))];
+let tileSel = null;
+function tileDefs(){
+  const d = [
+    ['open','Open cases', r => !r.closed],
+    ['vh','Very High', r => !r.closed && r.live.band === 'Very High'],
+    ['hi','High', r => !r.closed && r.live.band === 'High'],
+    ['no','Normal', r => !r.closed && r.live.band === 'Normal'],
+    ['un','Urgency UNSURE', r => !r.closed && r.live.band === 'UNSURE'],
+    ['never','Never answered', r => !r.closed && (/NEVER ANSWERED/.test(r.flags) || /^no reply/i.test(r.answeredBy))],
+    ['threat','Threats', r => !r.closed && /THREAT/.test(r.flags)],
+    ['lena','Lena', r => !r.closed && r.owner === 'Lena'],
+    ['marco','Marco', r => !r.closed && r.owner === 'Marco'],
+    ['priya','Priya', r => !r.closed && r.owner === 'Priya'],
+    ['ownun','Owner UNSURE', r => !r.closed && /^UNSURE/.test(r.owner)],
+  ];
+  FOLDERS.forEach(f => d.push(['f:' + f, f, r => !r.closed && r.folder === f]));
+  d.push(['closed','Closed', r => r.closed]);
+  return d;
+}
+function renderTiles(){
+  const el = document.getElementById('tiles');
+  el.innerHTML = tileDefs().map(([k, label, fn]) =>
+    `<button type="button" class="tile${tileSel === k ? ' active' : ''}" data-k="${esc(k)}"><span class="n">${ROWS.filter(fn).length}</span><span class="l">${esc(label)}</span></button>`).join('');
+  el.querySelectorAll('.tile').forEach(b => b.onclick = () => { tileSel = tileSel === b.dataset.k ? null : b.dataset.k; renderAll(); });
+}
+
+/* ---------- filters ---------- */
+const $ = id => document.getElementById(id);
+function fillSelect(id, opts){ $(id).innerHTML = '<option value="">All</option>' + opts.map(o => `<option>${esc(o)}</option>`).join(''); }
+function initFilters(){
+  fillSelect('fFolder', FOLDERS);
+  fillSelect('fOwner', ['Lena','Marco','Priya','UNSURE']);
+  fillSelect('fCat', [...new Set(ROWS.flatMap(r => catParts(r.category)))].sort());
+  fillSelect('fUrg', ['Very High','High','Normal','Low: Responded','UNSURE']);
+  fillSelect('fFlag', FLAG_KEYS.concat(['none']));
+  ['fSearch','fFolder','fOwner','fCat','fUrg','fFlag','fCase','fFrom','fTo'].forEach(id => $(id).addEventListener('input', renderTable));
+  $('resetBtn').onclick = () => { ['fSearch','fFolder','fOwner','fCat','fUrg','fFlag','fCase','fFrom','fTo'].forEach(id => $(id).value = ''); tileSel = null; renderAll(); };
+}
+function passes(r){
+  if (tileSel){ const t = tileDefs().find(x => x[0] === tileSel); if (t && !t[2](r)) return false; }
+  const q = $('fSearch').value.trim().toLowerCase();
+  if (q && ![r.id,r.channel,r.folder,r.order,r.category,r.owner,r.flags,r.missing,r.subject,r.message,r.from].join(' ').toLowerCase().includes(q)) return false;
+  if ($('fFolder').value && r.folder !== $('fFolder').value) return false;
+  if ($('fOwner').value && ownerKey(r.owner) !== $('fOwner').value) return false;
+  if ($('fCat').value && !catParts(r.category).includes($('fCat').value)) return false;
+  if ($('fUrg').value && r.live.band !== $('fUrg').value) return false;
+  const fl = $('fFlag').value;
+  if (fl === 'none' && splitFlags(r.flags).length) return false;
+  if (fl && fl !== 'none' && !r.flags.includes(fl)) return false;
+  if ($('fCase').value === 'Open' && r.closed) return false;
+  if ($('fCase').value === 'Closed' && !r.closed) return false;
+  const from = parseET($('fFrom').value), to = parseET($('fTo').value);
+  if (from != null && r.caseOpenedT < from) return false;
+  if (to != null && r.caseOpenedT >= to + D) return false;
+  return true;
+}
+
+/* ---------- table ---------- */
+const COLS = [
+  ['id','ID', r => r.id],
+  ['channel','Channel', r => r.channel],
+  ['order','Order #', r => r.order],
+  ['category','Category', r => r.category],
+  ['owner','In charge', r => r.owner],
+  ['urgency','Urgency', r => (URG_RANK[r.live.band] || 0) * 1e5 + (r.live.hours || 0)],
+  ['opened','Case opened', r => r.caseOpenedT],
+  ['days','Days open', r => r.days],
+  ['flags','Flags', r => r.flags],
+  ['case','Case', r => r.closed ? 1 : 0],
+];
+let sortKey = null, sortDir = -1;
+function defaultCmp(a, b){ return (URG_RANK[b.live.band]||0) - (URG_RANK[a.live.band]||0) || b.days - a.days || a.id.localeCompare(b.id); }
+function renderHead(){
+  $('thead').innerHTML = COLS.map(([k, label]) => `<th data-k="${k}">${label} <span class="arr">${sortKey === k ? (sortDir > 0 ? '▲' : '▼') : ''}</span></th>`).join('');
+  $('thead').querySelectorAll('th').forEach(th => th.onclick = () => {
+    if (sortKey === th.dataset.k) sortDir = -sortDir; else { sortKey = th.dataset.k; sortDir = ['id','channel','order','category','owner','flags','opened'].includes(sortKey) ? 1 : -1; }
+    renderTable();
+  });
+}
+function renderTable(){
+  renderHead();
+  let rows = ROWS.filter(passes);
+  if (sortKey){
+    const get = COLS.find(c => c[0] === sortKey)[2];
+    rows.sort((a, b) => { const x = get(a), y = get(b); return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y))) * sortDir || defaultCmp(a, b); });
+  } else rows.sort(defaultCmp);
+  $('shown').textContent = `Showing ${rows.length} of ${ROWS.length} rows`;
+  $('tbody').innerHTML = rows.map(r => `<tr data-id="${esc(r.id)}">
+    <td class="nowrap"><b>${esc(r.id)}</b></td>
+    <td>${esc(r.channel)}</td>
+    <td class="nowrap">${maybeUnsure(r.order)}</td>
+    <td>${maybeUnsure(r.category)}</td>
+    <td>${maybeUnsure(r.owner)}</td>
+    <td>${urgPill(r.live)}</td>
+    <td class="nowrap">${esc(r.caseOpened.slice(0,16))}${r.caseOpened.length > 16 ? '<br><span class="unsure small">' + esc(r.caseOpened.slice(17)) + '</span>' : ''}</td>
+    <td>${r.days.toFixed(1)}</td>
+    <td class="flags">${splitFlags(r.flags).map(tagHTML).join('') || '<span class="muted">none</span>'}</td>
+    <td>${casePill(r)}</td></tr>`).join('') || `<tr><td colspan="10" class="muted">No rows match.</td></tr>`;
+  $('tbody').querySelectorAll('tr[data-id]').forEach(tr => tr.onclick = () => openDetail(tr.dataset.id));
+}
+
+/* ---------- detail + closing ---------- */
+function openDetail(id){
+  const r = ROWS.find(x => x.id === id);
+  const c = closes[id];
+  const fr = r.firstResponse != null ? `${(+r.firstResponse).toFixed(1)} h` : 'UNSURE: not in sources';
+  $('dlgBody').innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+      <div><h2>${esc(r.id)} · ${esc(r.subject || '(no subject)')}</h2><div class="muted small">Sort only. No reply is drafted or sent.</div></div>
+      <button type="button" id="dlgClose" aria-label="Close panel">✕</button>
+    </div>
+    <dl class="kv">
+      <dt>Received (ET)</dt><dd>${maybeUnsure(r.received || 'UNSURE: not in sources')}</dd>
+      <dt>From</dt><dd>${esc(r.from)}</dd>
+      <dt>Folder</dt><dd>sources/${esc(r.folder)}/</dd>
+      <dt>Channel</dt><dd>${esc(r.channel)}</dd>
+      <dt>Order #</dt><dd>${maybeUnsure(r.order)}</dd>
+      <dt>Category</dt><dd>${maybeUnsure(r.category)}</dd>
+      <dt>In charge</dt><dd>${maybeUnsure(r.owner)}</dd>
+      <dt>Urgency</dt><dd>${urgPill(r.live)}</dd>
+      <dt>Case opened</dt><dd>${maybeUnsure(r.caseOpened)}</dd>
+      <dt>Days open</dt><dd>${r.days.toFixed(1)}${r.closed ? ' (to Closed date)' : ' (to now)'}</dd>
+      <dt>Answered by</dt><dd>${maybeUnsure(r.answeredBy)}</dd>
+      <dt>First response</dt><dd>${maybeUnsure(fr)}</dd>
+      <dt>Missing info</dt><dd>${maybeUnsure(r.missing)}</dd>
+      <dt>Flags</dt><dd>${splitFlags(r.flags).map(tagHTML).join('') || '<span class="muted">none</span>'}</dd>
+    </dl>
+    <div class="msg">${esc(r.message || 'UNSURE: message file not found in sources/')}</div>
+    <div class="closebox">${c
+      ? `<span class="pill closed">Closed</span><span>Closed by <b>${esc(c.by)}</b> on <b>${esc(c.date)}</b></span><button type="button" id="reopenBtn">Reopen</button>`
+      : `<label>Closed by<select id="cBy"><option value="">Choose…</option><option>Lena</option><option>Marco</option><option>Priya</option></select></label>
+         <label>Closed date<input type="date" id="cDate" value="${TODAY}"></label>
+         <button type="button" class="primary" id="closeBtn">Close case</button><span id="cErr" class="bad small"></span>`}
+    </div>
+    <p class="muted small">Closes are saved in this browser only.</p>`;
+  $('dlgClose').onclick = () => $('dlg').close();
+  if (c) $('reopenBtn').onclick = () => { delete closes[id]; saveCloses(); renderAll(); openDetail(id); };
+  else $('closeBtn').onclick = () => {
+    const by = $('cBy').value, date = $('cDate').value;
+    if (!by) { $('cErr').textContent = 'Pick who closed it.'; return; }
+    if (!date) { $('cErr').textContent = 'Pick a closed date.'; return; }
+    if (parseET(date + ' 23:59') < r.caseOpenedT) { $('cErr').textContent = 'Closed date is before Case opened.'; return; }
+    closes[id] = { by, date }; saveCloses(); renderAll(); openDetail(id);
+  };
+  if (!$('dlg').open) $('dlg').showModal();
+}
+$('dlg').addEventListener('click', e => { if (e.target === $('dlg')) $('dlg').close(); });
+
+$('dlBtn').onclick = () => {
+  const lines = [['id','closed_by','closed_date']].concat(Object.keys(closes).sort().map(k => [k, closes[k].by, closes[k].date]));
+  const csv = lines.map(l => l.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n') + '\n';
+  try{
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+    a.download = 'tannerhill_closes.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ alert(csv); }
+};
+$('clearBtn').onclick = () => {
+  const n = Object.keys(closes).length;
+  if (!n) { alert('There are no closes saved in this browser.'); return; }
+  if (confirm(`Clear all ${n} closes saved in this browser? Every case will show as open.`)) { closes = {}; saveCloses(); renderAll(); }
+};
+
+/* ---------- tester: fixed keyword checks from CLAUDE.md (not AI) ---------- */
+const RULES = {
+  automated: /mailbox is not monitored|do not reply to this message|automatic reply|auto-?reply|out of office/i,
+  pitch: /organic ranking|\bSEO\b|free audit|quick wins|15 minute call|marketing agency|grow (?:your|similar)/i,
+  wholesale: /wholesale|price list|minimum order|payment terms|distributor|stockist/i,
+  ksReward: /\b(?:tier|reward|pledge)\b|only (?:ever )?received|never received|missing (?:item|kit|reward)/i,
+  ksCampaign: /campaign|early bird|pre-?launch/i,
+  damage: /arrived[^.]{0,60}(?:crushed|smashed|caved|damaged|broken|dented)|box (?:arrived |was )?(?:crushed|smashed|damaged)|damaged (?:in|during) (?:transit|shipping|delivery)|\bcarrier\b/i,
+  orderReq: /card (?:is|number|details)|\[card number hidden\]|rather buy|buy a new one|like to order|want to order|take whatever it costs/i,
+  warranty: /\bwarp|crack|\brust|stopped working|ignition|\bbent\b|wobbl|\bloose\b|snapped|\bstiff\b|squeak|defect|faulty|\bfailed\b|guarantee|warranty|covered|cover this/i,
+  ret: /\breturn\b|send it back|changed my mind|decided i don't need|doesn't (?:fit|work with)|too (?:small|big)/i,
+  billing: /charged (?:me )?twice|double[- ]charged|two pending|overcharged|billing|invoice/i,
+  refund: /\bcancel|refund|money back/i,
+  status: /where is my order|preparing to ship|tracking|shipped|(?:hasn't|has not|nothing'?s?) arrived|when will i get|order update|any update|actually coming|be here|haven't heard|had nothing|have nothing|\bno (?:grill|package|parcel|delivery)\b|waited .{0,15}(?:days|weeks)|checking on order/i,
+  product: /propane|charcoal|\btank\b|pre-?seasoned|look after|induction|cooktop|different between|difference|\bvs\b|does it (?:fit|come with|include)|is that separate|attachment|do you (?:do|sell|make)|compatible|what size/i,
+  threat: /one star|1-star|review on every|a-to-z|chargeback|disput\w* the charge|attorney general|lawyer|solicitor|legal action|small claims|\bBBB\b|escalate/i,
+  repeat: /second time|third time|fourth (?:time|message)|last two messages|following up|last time|again\b/i,
+  upset: /unacceptable|not happy|this is a joke|ridiculous|furious|disgusted|more than patient/i,
+  sensitive: /\[card number hidden\]|card (?:is|number)|security code|\bcvv\b/i,
+  castIron: /cast iron|skillet|dutch oven|\bpan\b/i,
+};
+function sortMessage(inp){
+  const txt = (inp.subject + '\n' + inp.message);
+  const why = [];
+  const hit = k => { const m = RULES[k].exec(txt); if (m) why.push(`${k}: "${m[0]}"`); return !!m; };
+  let cats = [];
+  const ks = inp.channel === 'Kickstarter';
+  if (hit('automated')) cats = ['UNSURE: automatic reply, no customer request'];
+  else if (hit('pitch')) cats = ['UNSURE: sales pitch, not a customer'];
+  else if (hit('wholesale')) cats = ['Wholesale'];
+  else {
+    if (ks && hit('ksReward')) cats.push('Kickstarter reward (missing item)');
+    else if (ks && hit('ksCampaign')) cats.push('Campaign news');
+    if (!cats.length){
+      const dmg = hit('damage'), ord = hit('orderReq');
+      if (dmg) cats.push('Shipping damage');
+      if (ord) cats.push('Order request (new purchase)');
+      const war = !dmg && !ord && hit('warranty');
+      if (war) cats.push('Warranty');
+      if (!war && !dmg && hit('ret')) cats.push('Return');
+      if (hit('billing')) cats.push('Billing');
+      if (!war && hit('refund')) cats.push('Refund/cancellation');
+      if (!dmg && hit('status')) cats.push('Shipping/order status');
+      if (!ord && hit('product')) cats.push('Product inquiry');
+    }
+  }
+  if (!cats.length) cats = ['UNSURE: message doesn\'t say what the customer wants'];
+  const category = cats.join(' + ');
+
+  // In charge: CLAUDE.md 2b
+  const owner = ks ? 'Priya' : cats.includes('Wholesale') ? 'Lena' : 'Marco';
+
+  // Flags
+  const flags = [];
+  if (hit('threat')) flags.push('THREAT: flag to Lena');
+  if (inp.replied === 'no') flags.push('NEVER ANSWERED');
+  if (hit('repeat')) flags.push('REPEAT', 'UNSURE: earlier emails not in pack, real wait is longer');
+  if (hit('upset')) flags.push('UPSET');
+  if (hit('sensitive')) flags.push('SENSITIVE: card details in the message; do not copy or reuse them');
+  if (cats.length > 1) flags.push('TWO TOPICS');
+  if (cats.includes('Wholesale')) flags.push('WHOLESALE: quote nothing; flag to Lena');
+  if (cats.some(c => /Refund|Billing|Order request/.test(c)) || /chargeback|disput\w* the charge/i.test(txt)) flags.push('NOTE: money - D08-04 says Lena only');
+  if (cats.includes('Shipping damage')) flags.push('NOTE: D08-05 says shipping damage comes to Lena', 'UNSURE: D08-05 has not decided carrier vs us; flag to Lena');
+  if (cats.some(c => /Warranty|Return/.test(c))) flags.push('UNSURE: a person checks this against D08-05; edge cases go to Marco. Third claim in a year cannot be checked here.');
+  if (cats.includes('Product inquiry')) flags.push('UNSURE: check the detail is in sources; if not, UNSURE: not in sources, flag to Priya');
+  if (/^UNSURE/.test(category)) flags.push('UNSURE: flag to Marco');
+
+  // Missing info (D08-05 list)
+  const miss = [];
+  if (cats.includes('Warranty')){
+    if (!inp.order.trim()) miss.push('Order number, or name + delivery ZIP');
+    if (!/arrived on|delivered on|delivery date/i.test(txt)) miss.push('When it arrived (delivery date)');
+    if (!/photo|picture|attached/i.test(txt)) miss.push('Photos: the fault and the whole item');
+    miss.push('What happened, in their words');
+    if (RULES.castIron.test(txt)) miss.push('Cast iron: photo of the cooking surface; how it was washed and stored');
+  }
+  if (cats.includes('Return')){
+    if (!/arrived on|delivered on|delivery date/i.test(txt)) miss.push('Delivery date');
+    if (!/unused|unopened|never used|still boxed|original packaging/i.test(txt)) miss.push('Whether unused and in original packaging');
+  }
+
+  // Urgency
+  const h = Math.max(0, +inp.hours || 0);
+  let u;
+  if (inp.replied === 'yes') u = { band:'Low: Responded', text:'Low: Responded' };
+  else if (inp.replied === 'unknown') u = { band:'UNSURE', text:`UNSURE: reply data not in sources (${h.toFixed(1)} h since clock start)` };
+  else { const b = band(h); u = { band:b, text:`${b} (${h.toFixed(1)} h waiting, no reply)` }; }
+
+  return { category, cats, owner, flags: [...new Set(flags)], missing: miss, urgency: u, days: Math.max(0, +inp.days || 0), why };
+}
+
+function catSet(c){ return /^UNSURE/.test(c) ? 'UNSURE' : catParts(c).slice().sort().join(' + '); }
+function compare(res, r){
+  return {
+    category: catSet(res.category) === catSet(r.category),
+    owner: res.owner === r.owner,
+    urgency: res.urgency.band === r.live.band,
+  };
+}
+function inputsFor(id){
+  const r = ROWS.find(x => x.id === id), m = msgById[id] || {};
+  const src = r || m;
+  const replied = r ? (isPerson(r.answeredBy) ? 'yes' : /^no reply/i.test(r.answeredBy) ? 'no' : 'unknown') : 'no';
+  return {
+    channel: m.channel || (r && r.channel) || 'Shared inbox', order: m.order || '',
+    subject: m.subject || '', message: m.message || '', replied,
+    hours: r && r.live.hours != null ? +r.live.hours.toFixed(1) : 0,
+    days: r ? +r.days.toFixed(1) : 0,
+  };
+}
+function initTester(){
+  const ids = [...new Set(DATA.messages.map(m => m.id).concat(DATA.sortRows.map(r => r.id)))].sort();
+  $('tLoad').innerHTML = '<option value="">Type my own message</option>' + ids.map(i => `<option>${esc(i)}</option>`).join('');
+  $('tLoad').onchange = () => {
+    const id = $('tLoad').value;
+    if (!id) return;
+    const i = inputsFor(id);
+    $('tChannel').value = i.channel; $('tOrder').value = i.order; $('tSubject').value = i.subject;
+    $('tMessage').value = i.message; $('tReplied').value = i.replied; $('tHours').value = i.hours; $('tDays').value = i.days;
+    runTester();
+  };
+  $('tRun').onclick = runTester;
+  $('tAll').onclick = runAll;
+}
+function readInputs(){ return { channel:$('tChannel').value, order:$('tOrder').value, subject:$('tSubject').value, message:$('tMessage').value, replied:$('tReplied').value, hours:$('tHours').value, days:$('tDays').value }; }
+function runTester(){
+  const res = sortMessage(readInputs());
+  const id = $('tLoad').value, r = id && ROWS.find(x => x.id === id);
+  const mark = ok => ok ? '<span class="ok">✓</span>' : '<span class="bad">differs</span>';
+  let html = `<p class="note">Sort only. No reply is drafted or sent.</p>
+    <dl class="kv">
+      <dt>Category</dt><dd>${maybeUnsure(res.category)}</dd>
+      <dt>In charge</dt><dd>${esc(res.owner)} <span class="muted small">(CLAUDE.md 2b)</span></dd>
+      <dt>Urgency</dt><dd>${urgPill(Object.assign({hours: res.urgency.band === 'Low: Responded' ? null : +$('tHours').value || 0}, res.urgency))}</dd>
+      <dt>Days open</dt><dd>${res.days.toFixed(1)}</dd>
+      <dt>Missing info</dt><dd>${res.missing.length ? res.missing.map(esc).join('; ') : 'n/a'}</dd>
+      <dt>Flags</dt><dd>${res.flags.map(tagHTML).join('') || '<span class="muted">none</span>'}</dd>
+      <dt>Keywords matched</dt><dd class="small muted">${res.why.length ? res.why.map(esc).join(' · ') : 'none'}</dd>
+    </dl>`;
+  if (r){
+    const c = compare(res, r);
+    html += `<h3 style="margin:10px 0 4px;font-size:1rem">Compared with the last sort (${esc(r.id)})</h3>
+      <div class="tablewrap"><table><thead><tr><th>Field</th><th>Tester</th><th>Last sort</th><th></th></tr></thead><tbody>
+      <tr><td>Category</td><td>${maybeUnsure(res.category)}</td><td>${maybeUnsure(r.category)}</td><td>${mark(c.category)}</td></tr>
+      <tr><td>In charge</td><td>${esc(res.owner)}</td><td>${maybeUnsure(r.owner)}</td><td>${mark(c.owner)}</td></tr>
+      <tr><td>Urgency</td><td>${esc(res.urgency.band)}</td><td>${esc(r.live.band)} <span class="muted small">(live)</span></td><td>${mark(c.urgency)}</td></tr>
+      </tbody></table></div>`;
+  }
+  $('tResult').innerHTML = html;
+}
+function testAllRows(){
+  return ROWS.filter(r => r.hasMessage).map(r => { const res = sortMessage(inputsFor(r.id)); return { r, res, c: compare(res, r) }; });
+}
+function runAll(){
+  const all = testAllRows();
+  const n = all.length, cnt = k => all.filter(x => x.c[k]).length;
+  const full = all.filter(x => x.c.category && x.c.owner && x.c.urgency).length;
+  const diffs = all.filter(x => !(x.c.category && x.c.owner && x.c.urgency));
+  const el = $('tAllResult'); el.hidden = false;
+  el.innerHTML = `<h3 style="margin:0 0 6px;font-size:1rem">All ${n} messages through the tester</h3>
+    <p>All three match: <b>${full}</b> of ${n} · Category: ${cnt('category')} · In charge: ${cnt('owner')} · Urgency: ${cnt('urgency')}</p>
+    <div class="tablewrap"><table><thead><tr><th>ID</th><th>Field</th><th>Tester</th><th>Last sort</th></tr></thead><tbody>
+    ${diffs.flatMap(x => [
+      !x.c.category && `<tr><td>${x.r.id}</td><td>Category</td><td>${maybeUnsure(x.res.category)}</td><td>${maybeUnsure(x.r.category)}</td></tr>`,
+      !x.c.owner && `<tr><td>${x.r.id}</td><td>In charge</td><td>${esc(x.res.owner)}</td><td>${maybeUnsure(x.r.owner)}</td></tr>`,
+      !x.c.urgency && `<tr><td>${x.r.id}</td><td>Urgency</td><td>${esc(x.res.urgency.band)}</td><td>${esc(x.r.live.band)}</td></tr>`,
+    ].filter(Boolean)).join('') || '<tr><td colspan="4">No differences.</td></tr>'}
+    </tbody></table></div>`;
+}
+
+/* ---------- theme + tabs ---------- */
+const THEMES = ['system','light','dark'];
+function applyTheme(t){
+  if (t === 'system') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+  $('themeBtn').textContent = 'Theme: ' + t;
+}
+let theme = 'system';
+try{ theme = localStorage.getItem(THEME_KEY) || 'system'; }catch(e){}
+if (!THEMES.includes(theme)) theme = 'system';
+applyTheme(theme);
+$('themeBtn').onclick = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % 3]; applyTheme(theme); try{ localStorage.setItem(THEME_KEY, theme); }catch(e){} };
+
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
+  ['inbox','test','rules'].forEach(t => $('tab-' + t).hidden = t !== b.dataset.tab);
+});
+
+/* ---------- start ---------- */
+function renderAll(){ refreshLive(); renderTiles(); renderTable(); }
+function init(){
+  $('times').innerHTML = `Last sorted ${esc(DATA.runTime)} ET · Times as of ${esc(fmtET(NOW))} ET` +
+    `<div class="pretend">Pretend clock: real ${esc(PRETEND.realDay)} shows as ${esc(PRETEND.pretendDay)}, one day forward per real day.` +
+    (PRETEND_RAW < RUN ? ` Pretend time ${esc(fmtET(PRETEND_RAW))} is before the last sort, so the sort time is used.` : '') + `</div>`;
+  document.querySelectorAll('.js-sortfile').forEach(e => e.textContent = DATA.sortFile);
+  const counts = {};
+  DATA.messages.forEach(m => counts[m.folder] = (counts[m.folder] || 0) + 1);
+  $('folderList').innerHTML = Object.keys(counts).map(f => `<li><code>sources/${esc(f)}/</code>: ${counts[f]} messages</li>`).join('') + `<li>Total: ${DATA.messages.length}</li>`;
+  refreshLive();
+  renderIssues();
+  initFilters();
+  initTester();
+  renderAll();
+}
+init();
+</script>
+</body>
+</html>
