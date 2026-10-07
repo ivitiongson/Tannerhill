@@ -83,10 +83,11 @@ Columns: ID | Channel | Order # | Category | In charge | Missing info | Flags | 
 - Missing info (Warranty/Return only, else "n/a"): the D08-05 items.
 - Flags: TWO TOPICS; UPSET or REPEAT; THREAT (name it);
   NEVER ANSWERED; POLICY CHANGE: depends on [DATE]; UNSURE: reason.
-- Urgency (weekday hours only): clock starts at the customer's first
-  email after our last reply; stops at our first reply, or the run
-  time if no reply. Normal 0-12 h · High >12 to 36 h · Very High >36 h.
-  Show hours, e.g. "High (30.0 h)" / "High (28.2 h waiting, no reply)".
+- Urgency (weekday hours only), per CLAUDE.md:
+  Replied -> "Low: Responded (first reply 30.0 h)".
+  Not responded -> clock from the customer's first email after our
+  last reply to the run time: Normal 0-12 h · High >12 to 36 h ·
+  Very High >36 h, e.g. "High (28.2 h waiting, no reply)".
   Threats go in Flags only.
 - Case opened: date and time (ET) of the customer's first email in
   the same conversation (same order # or sender). If they say they

@@ -6,7 +6,7 @@ placeholders in the <script> block. Do not change layout, styles or code.
   __DATA__     JSON array, one object per message:
                { "id":"CS-01", "channel":"Kickstarter", "folder":"kickstarter",
                  "order":"none", "category":"...", "owner":"...", "missing":"...",
-                 "flags":"... ; ...", "urgency":"High (30.0 h)",
+                 "flags":"... ; ...", "urgency":"Low: Responded (first reply 30.0 h)" or "High (28.2 h waiting, no reply)",
                  "caseOpened":"2026-03-02 09:40", "days":11.6,
                  "received":"2026-03-02T09:40", "subject":"...", "message":"...",
                  "answeredBy":"Priya" or "No reply", "firstResp":144 or null }
@@ -83,6 +83,7 @@ tr.detail td{background:var(--surface-2)}
 .u-vh{background:var(--crit-bg)} .u-vh .dot{background:var(--crit)}
 .u-h{background:var(--serious-bg)} .u-h .dot{background:var(--serious)}
 .u-n{background:var(--norm-bg)} .u-n .dot{background:var(--norm)}
+.u-l{background:var(--good-bg)} .u-l .dot{background:var(--good)}
 .closed{background:var(--good-bg)} .closed .dot{background:var(--good)}
 .flag{display:inline-block;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin:1px 2px 1px 0}
 .flag.threat{border-color:var(--crit);font-weight:700}
@@ -139,7 +140,8 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
   </div>
 
   <div class="card">
-    <div class="note" id="countLine" style="margin-bottom:8px"></div>
+    <div class="note" id="countLine" style="margin-bottom:4px"></div>
+    <div class="note" style="margin-bottom:8px"><b>Note on urgency:</b> Normal, High and Very High are only for emails we have not responded to. Anything we've replied to shows <b>Low: Responded</b>, with how fast our first reply was. Follow-up replies and the customer's answers aren't recorded yet, so check Low cases before closing them.</div>
     <div class="tablewrap">
       <table>
         <thead><tr>
@@ -204,10 +206,11 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
       <dt>When unsure</dt><dd>Writes "UNSURE: reason" and flags it to a named person. Never picks the most likely answer.</dd>
       <dt>In charge</dt><dd>Kickstarter channel → Priya · wholesale → Lena · everything else → Marco. Anyone can reassign a case to Lena, Marco or Priya on the Inbox tab. Money, shipping damage and third warranty claims carry a NOTE flag, because D08-04 and D08-05 send those to Lena.</dd>
       <dt>Urgency</dt><dd>Weekday hours only, from the customer's first email after our last reply to our first reply (or to the end of the pack if no reply).<br>
-        <span class="pill u-n"><span class="dot"></span>Normal</span> 0–12 h ·
-        <span class="pill u-h"><span class="dot"></span>High</span> more than 12, up to 36 h ·
-        <span class="pill u-vh"><span class="dot"></span>Very High</span> more than 36 h<br>
-        Threats sit in Flags and never change urgency.</dd>
+        <span class="pill u-l"><span class="dot"></span>Low: Responded</span> we have replied ·
+        <span class="pill u-n"><span class="dot"></span>Normal</span> not responded, 0–12 h ·
+        <span class="pill u-h"><span class="dot"></span>High</span> not responded, more than 12, up to 36 h ·
+        <span class="pill u-vh"><span class="dot"></span>Very High</span> not responded, more than 36 h<br>
+        Threats sit in Flags and never change urgency.<br>Follow-up replies aren't recorded yet, so check Low: Responded cases before closing them.</dd>
       <dt>Case opened</dt><dd>Date and time of the customer's first email in the conversation.</dd>
       <dt>Days open</dt><dd>Calendar days from Case opened until a person closes the case.</dd>
       <dt>Missing info</dt><dd>Warranty and returns only (D08-05): order number (or name + delivery ZIP) · delivery date · photos (fault + whole item; cooking surface for cast iron) · what happened (cast iron: washing and storage too).</dd>
@@ -239,11 +242,11 @@ function saveA(o){ try{ localStorage.setItem(ASTORE, JSON.stringify(o)); }catch(
 let assigns = loadA();
 const ownerOf = r => (assigns[r.id] && assigns[r.id].to) || r.owner;
 
-const urgLevel = u => u.startsWith('Very High') ? 'Very High' : u.startsWith('High') ? 'High' : 'Normal';
-const urgRank = {'Very High':0,'High':1,'Normal':2};
+const urgLevel = u => u.startsWith('Low') ? 'Low: Responded' : u.startsWith('Very High') ? 'Very High' : u.startsWith('High') ? 'High' : 'Normal';
+const urgRank = {'Very High':0,'High':1,'Normal':2,'Low: Responded':3};
 function urgPill(u){
-  const lv = urgLevel(u), cls = lv==='Very High'?'u-vh':lv==='High'?'u-h':'u-n';
-  const extra = u.slice(lv.length).trim();
+  const lv = urgLevel(u), cls = lv==='Very High'?'u-vh':lv==='High'?'u-h':lv==='Normal'?'u-n':'u-l';
+  const extra = u.replace(/^(Low: Responded|Low|Very High|High|Normal)/,'').trim();
   return `<span class="pill ${cls}"><span class="dot"></span>${lv}</span> <span class="muted">${esc(extra)}</span>`;
 }
 function ownerKey(o){ return o.startsWith('UNSURE') ? 'UNSURE' : o; }
@@ -290,7 +293,7 @@ function fillSelect(sel, values){
 fillSelect($('#fFolder'), [...new Set(DATA.map(r=>r.folder).filter(Boolean))].sort());
 fillSelect($('#fOwner'), ['Lena','Marco','Priya','UNSURE']);
 fillSelect($('#fCat'), [...new Set(DATA.flatMap(r=>cats(r.category)))].sort());
-fillSelect($('#fUrg'), ['Very High','High','Normal']);
+fillSelect($('#fUrg'), ['Very High','High','Normal','Low: Responded']);
 fillSelect($('#fFlag'), ['THREAT','NEVER ANSWERED','UPSET / REPEAT','TWO TOPICS','POLICY CHANGE','UNSURE','NOTE']);
 
 let sortKey = 'urgency', sortDir = 1, openRow = null;
@@ -330,6 +333,7 @@ function renderTiles(){
     ['Very High', n(r=>urgLevel(liveUrg(r))==='Very High'), 'u-vh', ()=>setF({fUrg:'Very High',fCase:'Open'})],
     ['High', n(r=>urgLevel(liveUrg(r))==='High'), 'u-h', ()=>setF({fUrg:'High',fCase:'Open'})],
     ['Normal', n(r=>urgLevel(liveUrg(r))==='Normal'), 'u-n', ()=>setF({fUrg:'Normal',fCase:'Open'})],
+    ['Low: Responded', n(r=>urgLevel(liveUrg(r))==='Low: Responded'), 'u-l', ()=>setF({fUrg:'Low: Responded',fCase:'Open'})],
     ['Never answered', n(r=>/NEVER ANSWERED/.test(r.flags)), '', ()=>setF({fFlag:'NEVER ANSWERED',fCase:'Open'})],
     ['Threats', n(r=>/THREAT/.test(r.flags)), '', ()=>setF({fFlag:'THREAT',fCase:'Open'})],
     ['Lena', n(r=>ownerOf(r)==='Lena'), '', ()=>setF({fOwner:'Lena',fCase:'Open'})],
@@ -507,7 +511,7 @@ function sortMessage(inp){
   // urgency
   const h = Number(inp.hours)||0;
   const lv = h<=12?'Normal':h<=36?'High':'Very High';
-  out.urgency = `${lv} (${h.toFixed(1)} h${inp.replied==='no'?' waiting, no reply':''})`;
+  out.urgency = inp.replied==='no' ? `${lv} (${h.toFixed(1)} h waiting, no reply)` : `Low: Responded (first reply ${h.toFixed(1)} h)`;
   out.days = Number(inp.days)||0;
   return out;
 }

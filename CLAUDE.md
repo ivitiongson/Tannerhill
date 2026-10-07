@@ -69,19 +69,24 @@ Never pick the most likely answer. Write "UNSURE: <reason>" in the cell and flag
 
 Every sort file is titled "DRAFT - pending Lena's approval".
 
-Urgency measures response time only, so the team can see which emails missed the 12-hour target. Count weekday hours only (remove Saturday and Sunday) from "First response (hours)":
-- Normal = 0-12 hours
-- High = more than 12, up to 36 hours
-- Very High = more than 36 hours
+Urgency shows which emails are still waiting on us. Count weekday hours only (remove Saturday and Sunday).
+
+| Status | When | Show as |
+|---|---|---|
+| **Low: Responded** | We have replied ("Answered by" names a person) | "Low: Responded (first reply 30.0 h)" |
+| **Normal** | Not responded, waiting 0-12 hours | "Normal (8.0 h waiting, no reply)" |
+| **High** | Not responded, waiting more than 12, up to 36 hours | "High (28.2 h waiting, no reply)" |
+| **Very High** | Not responded, waiting more than 36 hours | "Very High (80.5 h waiting, no reply)" |
+
+- Normal, High and Very High are only for emails we have **not** responded to.
+- "First reply" hours come from "First response (hours)", weekday hours only. They show how fast we answered; they don't change the status.
 
 **When the clock starts:** at the customer's first email after our last reply. Every reply from us resets the clock; it starts again at their next email.
 - One email, no reply: the clock starts at that email.
 - Several emails, no reply to any: the clock starts at the first of them.
 - Same conversation = same order number or same sender.
 
-**Reply data not in sources:** if a message has no "Answered by" and no first-response time in `sources/` (blank, not "No reply"), set Urgency = "Normal (reply data not in sources)" and add the flag "UNSURE: reply data not in sources". Do not count it as unanswered.
-
-**When the clock stops:** at our first reply. If "Answered by" = "No reply" (or the index shows no reply), count to the run time. Show it as e.g. "High (28.2 h waiting, no reply)".
+**When the clock stops:** at our first reply, and the status becomes Low: Responded. If "Answered by" = "No reply" (or the index shows no reply), count to the run time.
 
 **Earlier emails not in the pack:** if a message says the customer wrote before (e.g. "second time asking") but the earlier email isn't in the pack, count from this message and add the flag "UNSURE: earlier emails not in pack, real wait is longer". Never guess the earlier date.
 
@@ -106,5 +111,4 @@ End every run with: rows processed, files created, and any rule from section 1 t
 | [date] | Added "Case opened" column (first email) | Show when each case started | [yes/no] | Ivs |
 | [date] | Warranty and returns now go to Marco (third claim in a year and money stay with Lena) | D08-05 gives warranty/returns decisions to Marco; Day 8 says "Route to Marco" | [yes/no] | Marco |
 | [date] | In charge: Kickstarter → Priya, wholesale → Lena, everything else → Marco; NOTE flags where D08-04/D08-05 name Lena; people can reassign on the dashboard | One clear owner for most messages, with Lena or Priya assigned by hand when needed | [yes/no] | Marco |
-
-| [date] | Urgency = "Normal (reply data not in sources)" when sources/ has no reply information | Some messages are replied to but have no reply record; don't mark them unanswered | [yes/no] | Marco |
+| [date] | Urgency: "Low: Responded" for anything we've replied to; Normal / High / Very High only for emails not responded to | Show at a glance which emails are still waiting on us | [yes/no] | Marco |
