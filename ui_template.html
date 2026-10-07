@@ -1,6 +1,6 @@
 <!--
 UI TEMPLATE - Tannerhill Inbox Sorter
-To rebuild: copy this file to output/index.html and replace ONLY the three
+To rebuild: copy this file to output/index.html and replace ONLY the four
 placeholders in the <script> block. Do not change layout, styles or code.
 
   __DATA__     JSON array, one object per message:
@@ -12,6 +12,10 @@ placeholders in the <script> block. Do not change layout, styles or code.
                  "answeredBy":"Priya" or "No reply", "firstResp":144 or null }
   __RUN_TIME__ JSON string, sort run time, e.g. "2026-10-07T08:36"
   __ISSUES__   JSON array of strings (index/file mismatches), [] if none
+  __TODAY__    pretend clock from the prompt, or null for real time:
+               {"pretend":"2026-03-18T14:05","real":"2026-10-07T14:05"}
+               = "the real time I built this page" mapped to "the pretend time".
+               The page then moves forward one day per real day on its own.
 
 Escape "</" as "<\/" inside the JSON.
 -->
@@ -137,7 +141,7 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
       <label>Urgency<select id="fUrg"></select></label>
       <label>Flag<select id="fFlag"></select></label>
       <label>Case<select id="fCase"><option value="">All</option><option>Open</option><option>Closed</option></select></label>
-      <label>Times counted to<select id="fAsOf"><option value="now">Now</option><option value="run">Last sort run</option></select></label>
+      <label>Times counted to<select id="fAsOf"><option value="now">Now (pretend date)</option><option value="run">Last sort run</option></select></label>
       <button class="btn" id="clearBtn" type="button">Clear filters</button>
     </div>
   </div>
@@ -230,7 +234,12 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
 const DATA = __DATA__;
 const RUN_TIME = __RUN_TIME__;   // when the sort ran, e.g. '2026-10-07T08:36'
 const DATA_ISSUES = __ISSUES__; // list of strings, [] if none
-const NOW = new Date();
+const TODAY = __TODAY__;      // pretend clock, set by the prompt, e.g. {"pretend":"2026-03-18T14:05","real":"2026-10-07T14:05"}; null = real time
+const NOW = (TODAY && TODAY.pretend && TODAY.real)
+  ? new Date(new Date(TODAY.pretend).getTime() + (Date.now() - new Date(TODAY.real).getTime()))
+  : new Date();
+const PRETEND = !!(TODAY && TODAY.pretend);
+const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const STORE = 'tannerhill-closes-v1';
 
 /* ---------- helpers ---------- */
@@ -374,7 +383,7 @@ function setF(o){
 
 /* ---------- table ---------- */
 function render(){
-  $('#timeLine').textContent = `Last sorted ${fmtDT(new Date(RUN_TIME))} · Times as of ${fmtDT(asOf())}`;
+  $('#timeLine').textContent = `Last sorted ${fmtDT(new Date(RUN_TIME))} · Times as of ${fmtDT(asOf())}${($('#fAsOf').value==='run'||!PRETEND)?'':' (pretend date)'}`;
   renderTiles();
   const rows = sorted(filtered());
   $('#countLine').textContent = `Showing ${rows.length} of ${DATA.length} messages · click a row for the message, missing info and close button`;
@@ -411,7 +420,7 @@ function render(){
                    <button class="btn" type="button" data-reopen="${r.id}">Reopen</button>`
                 : `<div class="closeform">
                      <label class="note">Closed by<select data-by="${r.id}"><option>Lena</option><option>Marco</option><option>Priya</option></select></label>
-                     <label class="note">Closed date<input type="date" data-date="${r.id}" value="${new Date().toISOString().slice(0,10)}"></label>
+                     <label class="note">Closed date<input type="date" data-date="${r.id}" value="${ymd(NOW)}"></label>
                      <button class="btn primary" type="button" data-close="${r.id}">Close case</button>
                    </div>`}
           </div>
@@ -428,7 +437,7 @@ function render(){
   });
   document.querySelectorAll('[data-assign]').forEach(b=>b.onclick=()=>{
     const id=b.dataset.assign, to=document.querySelector(`[data-as="${id}"]`).value, r=DATA.find(x=>x.id===id);
-    if(to===r.owner){ delete assigns[id]; } else { assigns[id]={to,date:new Date().toISOString().slice(0,10)}; }
+    if(to===r.owner){ delete assigns[id]; } else { assigns[id]={to,date:ymd(NOW)}; }
     saveA(assigns); render();
   });
   document.querySelectorAll('[data-unassign]').forEach(b=>b.onclick=()=>{ delete assigns[b.dataset.unassign]; saveA(assigns); render(); });
