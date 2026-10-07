@@ -71,9 +71,11 @@ Urgency measures response time only, so the team can see which emails missed the
 
 ## 5. Open and closed cases
 
-- A case opens when the customer's first email arrives.
+- A case opens when the customer's first email arrives. Show it in the "Case opened" column as date and time (ET), e.g. "2026-03-02 09:40".
+- Case opened = the earliest email from the same customer in the same conversation (same order number or same sender) found in `sources/`.
+- If the message says the customer wrote before but the earlier email isn't in `sources/`, use this message's time and add "(UNSURE: earlier emails not in pack)". Never guess the earlier date.
 - Only a person closes a case, by filling in "Closed by" and "Closed date". The agent always leaves both blank.
-- Days open = from the first email to "Closed date", or to the run time if still open.
+- Days open = from Case opened to "Closed date", or to the run time if still open.
 - Count calendar days (weekends included), to one decimal place, e.g. "11.6".
 
 Threats, repeat customers and upset customers go in the Flags column, never in Urgency.
@@ -84,4 +86,5 @@ End every run with: rows processed, files created, and any rule from section 1 t
 | Date | What changed | Why | Tests re-run? | Owner |
 |---|---|---|---|---|
 | [date] | First version | Test 2 failed: no CLAUDE.md in repo | [yes/no] | Ivs |
+| [date] | Added "Case opened" column (first email) | Show when each case started | [yes/no] | Ivs |
 | [date] | Sources = everything in `sources/`; end point = run time instead of 13 Mar | New emails arrive in `sources/` automatically (D08-06) | [yes/no] | Ivs |
