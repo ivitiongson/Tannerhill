@@ -1,0 +1,539 @@
+<!--
+UI TEMPLATE - Tannerhill Inbox Sorter
+To rebuild: copy this file to output/index.html and replace ONLY the three
+placeholders in the <script> block. Do not change layout, styles or code.
+
+  __DATA__     JSON array, one object per message:
+               { "id":"CS-01", "channel":"Kickstarter", "folder":"kickstarter",
+                 "order":"none", "category":"...", "owner":"...", "missing":"...",
+                 "flags":"... ; ...", "urgency":"High (30.0 h)",
+                 "caseOpened":"2026-03-02 09:40", "days":11.6,
+                 "received":"2026-03-02T09:40", "subject":"...", "message":"...",
+                 "answeredBy":"Priya" or "No reply", "firstResp":144 or null }
+  __RUN_TIME__ JSON string, sort run time, e.g. "2026-10-07T08:36"
+  __ISSUES__   JSON array of strings (index/file mismatches), [] if none
+
+Escape "</" as "<\/" inside the JSON.
+-->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tannerhill Inbox Sorter</title>
+<style>
+:root{
+  --bg:#f6f6f4; --surface:#fcfcfb; --surface-2:#f0f0ed; --border:#e2e2dd;
+  --ink:#1c1c1a; --ink-2:#55554f; --ink-3:#86867f;
+  --accent:#2d5b8a; --accent-ink:#ffffff;
+  --crit:#d03b3b; --crit-bg:#fbe9e9; --serious:#ec835a; --serious-bg:#fdf0ea;
+  --norm:#86867f; --norm-bg:#efefec; --good:#0ca30c; --good-bg:#e6f5e6;
+  --banner-bg:#fff6dc; --banner-ink:#6b4f00;
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --border:#33332f;
+    --ink:#ededea; --ink-2:#b4b4ad; --ink-3:#85857e;
+    --accent:#7fb0e3; --accent-ink:#0d1b29;
+    --crit-bg:#3a1c1c; --serious-bg:#3a2a20; --norm-bg:#2a2a27; --good-bg:#183218;
+    --banner-bg:#3a3014; --banner-ink:#f5d77a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121211; --surface:#1a1a19; --surface-2:#232321; --border:#33332f;
+  --ink:#ededea; --ink-2:#b4b4ad; --ink-3:#85857e;
+  --accent:#7fb0e3; --accent-ink:#0d1b29;
+  --crit-bg:#3a1c1c; --serious-bg:#3a2a20; --norm-bg:#2a2a27; --good-bg:#183218;
+  --banner-bg:#3a3014; --banner-ink:#f5d77a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:1280px;margin:0 auto;padding:16px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;margin:8px 0 12px}
+h1{font-size:22px;margin:0}
+h2{font-size:17px;margin:0 0 10px}
+.sub{color:var(--ink-2);font-size:13px}
+.banner{background:var(--banner-bg);color:var(--banner-ink);border-radius:var(--radius);padding:10px 14px;font-weight:600;margin-bottom:14px}
+.tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.tab{border:1px solid var(--border);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit}
+.tile:hover{border-color:var(--accent)}
+.tile .v{font-size:26px;font-weight:700;line-height:1.1}
+.tile .l{color:var(--ink-2);font-size:13px;display:flex;align-items:center;gap:6px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:end}
+.filters label{display:flex;flex-direction:column;font-size:12px;color:var(--ink-2);gap:3px}
+select,input,textarea{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:7px 9px}
+textarea{width:100%;min-height:110px;resize:vertical}
+button.btn{font:inherit;border:1px solid var(--border);background:var(--surface-2);color:var(--ink);border-radius:8px;padding:7px 12px;cursor:pointer}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+td:first-child{white-space:nowrap}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--border);vertical-align:top}
+th{position:sticky;top:0;background:var(--surface);color:var(--ink-2);font-weight:600;cursor:pointer;white-space:nowrap}
+tbody tr.row{cursor:pointer}
+tbody tr.row:hover{background:var(--surface-2)}
+tr.detail td{background:var(--surface-2)}
+.pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:2px 9px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+.u-vh{background:var(--crit-bg)} .u-vh .dot{background:var(--crit)}
+.u-h{background:var(--serious-bg)} .u-h .dot{background:var(--serious)}
+.u-n{background:var(--norm-bg)} .u-n .dot{background:var(--norm)}
+.closed{background:var(--good-bg)} .closed .dot{background:var(--good)}
+.flag{display:inline-block;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin:1px 2px 1px 0}
+.flag.threat{border-color:var(--crit);font-weight:700}
+.unsure{color:var(--ink-2);font-style:italic}
+.muted{color:var(--ink-3)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:820px){.grid2{grid-template-columns:1fr}}
+.kv{display:grid;grid-template-columns:120px 1fr;gap:6px 10px;font-size:14px}
+.kv dt{color:var(--ink-2)}
+.kv dd{margin:0}
+.note{font-size:13px;color:var(--ink-2)}
+.closeform{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin-top:10px}
+.hidden{display:none}
+footer{color:var(--ink-3);font-size:12px;margin:20px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>Tannerhill Inbox Sorter</h1>
+    <div class="sub">Sources: sources/ (shared-inbox, amazon, kickstarter) · Policy: D08-05</div>
+    <div class="sub" id="timeLine"></div>
+  </div>
+  <button class="btn" id="themeBtn" type="button">Theme</button>
+</header>
+
+<div class="banner">DRAFT – pending Lena's approval. Sort only: this page never drafts or sends a reply, and never decides a claim.</div>
+
+<div class="card hidden" id="issues" style="border-color:var(--crit)"></div>
+
+<div class="tabs" role="tablist">
+  <button class="tab" role="tab" aria-selected="true" data-tab="inbox">Inbox</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="test">Test a message</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="rules">Rules</button>
+</div>
+
+<!-- INBOX -->
+<section id="tab-inbox">
+  <div class="tiles" id="tiles"></div>
+
+  <div class="card">
+    <div class="filters">
+      <label>Search<input id="fSearch" placeholder="ID, order #, text…"></label>
+      <label>Folder<select id="fFolder"></select></label>
+      <label>In charge<select id="fOwner"></select></label>
+      <label>Category<select id="fCat"></select></label>
+      <label>Urgency<select id="fUrg"></select></label>
+      <label>Flag<select id="fFlag"></select></label>
+      <label>Case<select id="fCase"><option value="">All</option><option>Open</option><option>Closed</option></select></label>
+      <label>Times counted to<select id="fAsOf"><option value="now">Now</option><option value="run">Last sort run</option></select></label>
+      <button class="btn" id="clearBtn" type="button">Clear filters</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="note" id="countLine" style="margin-bottom:8px"></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr>
+          <th data-k="id">ID</th><th data-k="channel">Channel</th><th data-k="order">Order #</th>
+          <th data-k="category">Category</th><th data-k="owner">In charge</th>
+          <th data-k="urgency">Urgency</th><th data-k="caseOpened">Case opened</th><th data-k="days">Days open</th>
+          <th data-k="flags">Flags</th><th data-k="case">Case</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Closing cases</h2>
+    <p class="note">Only a person closes a case. Closes you make here are saved <b>in this browser only</b>. To share them, download the file below and upload it to the GitHub repo, or copy the Closed by and Closed date into sort_results.md.</p>
+    <button class="btn" id="exportBtn" type="button">Download closes (CSV)</button>
+    <button class="btn" id="resetBtn" type="button">Clear all closes in this browser</button>
+  </div>
+</section>
+
+<!-- TEST -->
+<section id="tab-test" class="hidden">
+  <div class="grid2">
+    <div class="card">
+      <h2>Test a message</h2>
+      <p class="note">Applies the CLAUDE.md rules as fixed checks, not AI. If no rule decides, it says UNSURE rather than guessing.</p>
+      <div class="filters" style="margin-bottom:10px">
+        <label>Load a pack message<select id="tLoad"><option value="">– type your own –</option></select></label>
+      </div>
+      <div class="filters" style="margin-bottom:10px">
+        <label>Channel<select id="tChannel"><option>Shared inbox</option><option>Amazon buyer messages</option><option>Kickstarter</option></select></label>
+        <label>Order #<input id="tOrder" placeholder="leave blank if none"></label>
+      </div>
+      <div class="filters" style="margin-bottom:10px">
+        <label>Subject<input id="tSubject" style="min-width:260px"></label>
+      </div>
+      <label class="note" for="tMsg">Message</label>
+      <textarea id="tMsg"></textarea>
+      <div class="filters" style="margin:10px 0">
+        <label>Replied?<select id="tReplied"><option value="yes">Yes</option><option value="no">No reply yet</option></select></label>
+        <label><span id="tHoursLbl">Weekday hours to first reply</span><input id="tHours" type="number" min="0" step="0.1" value="0"></label>
+        <label>Calendar days open<input id="tDays" type="number" min="0" step="0.1" value="0"></label>
+      </div>
+      <button class="btn primary" id="tRun" type="button">Sort this message</button>
+    </div>
+    <div class="card">
+      <h2>Result</h2>
+      <div id="tOut" class="note">Fill in a message and press "Sort this message".</div>
+      <div id="tCompare" class="note" style="margin-top:12px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- RULES -->
+<section id="tab-rules" class="hidden">
+  <div class="card">
+    <h2>What the sorter does</h2>
+    <dl class="kv">
+      <dt>Does</dt><dd>Sorts each message by category, person in charge, missing info, flags, urgency and days open.</dd>
+      <dt>Never</dt><dd>Drafts or sends a reply · changes an order, refund or price · approves or denies a claim · closes a case · edits its own rules.</dd>
+      <dt>When unsure</dt><dd>Writes "UNSURE: reason" and flags it to a named person. Never picks the most likely answer.</dd>
+      <dt>In charge</dt><dd>Kickstarter channel → Priya · order status, shipping, tracking → Marco · everything else → Lena · two topics with different owners → UNSURE.</dd>
+      <dt>Urgency</dt><dd>Weekday hours only, from the customer's first email after our last reply to our first reply (or to the end of the pack if no reply).<br>
+        <span class="pill u-n"><span class="dot"></span>Normal</span> 0–12 h ·
+        <span class="pill u-h"><span class="dot"></span>High</span> more than 12, up to 36 h ·
+        <span class="pill u-vh"><span class="dot"></span>Very High</span> more than 36 h<br>
+        Threats sit in Flags and never change urgency.</dd>
+      <dt>Case opened</dt><dd>Date and time of the customer's first email in the conversation.</dd>
+      <dt>Days open</dt><dd>Calendar days from Case opened until a person closes the case.</dd>
+      <dt>Missing info</dt><dd>Warranty and returns only (D08-05): order number (or name + delivery ZIP) · delivery date · photos (fault + whole item; cooking surface for cast iron) · what happened (cast iron: washing and storage too).</dd>
+      <dt>Flag to</dt><dd>Unclear request → Marco (cover Lena) · two owners → Marco (cover Lena) · warranty/return edge case → Marco (cover Lena) · shipping damage → Lena (cover Marco) · wholesale → Lena · threat → Lena (cover Marco) · product detail not in sources → Priya (cover Lena).</dd>
+      <dt>Policy</dt><dd>Current: D08-05. Proposed warranty change (12 months for orders from [DATE]) is <b>pending Lena's approval, not in force</b>.</dd>
+    </dl>
+  </div>
+</section>
+
+<footer>Sources: Customer Service Message Pack (sheet "Messages 2-13 Mar"), D08-05, CLAUDE.md. Category, owner and flags come from the last sort; waiting time and days open update live.</footer>
+</div>
+
+<script>
+const DATA = __DATA__;
+const RUN_TIME = __RUN_TIME__;   // when the sort ran, e.g. '2026-10-07T08:36'
+const DATA_ISSUES = __ISSUES__; // list of strings, [] if none
+const NOW = new Date();
+const STORE = 'tannerhill-closes-v1';
+
+/* ---------- helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function load(){ try{ return JSON.parse(localStorage.getItem(STORE)) || {}; }catch(e){ return {}; } }
+function save(o){ try{ localStorage.setItem(STORE, JSON.stringify(o)); }catch(e){} }
+let closes = load();
+
+const urgLevel = u => u.startsWith('Very High') ? 'Very High' : u.startsWith('High') ? 'High' : 'Normal';
+const urgRank = {'Very High':0,'High':1,'Normal':2};
+function urgPill(u){
+  const lv = urgLevel(u), cls = lv==='Very High'?'u-vh':lv==='High'?'u-h':'u-n';
+  const extra = u.slice(lv.length).trim();
+  return `<span class="pill ${cls}"><span class="dot"></span>${lv}</span> <span class="muted">${esc(extra)}</span>`;
+}
+function ownerKey(o){ return o.startsWith('UNSURE') ? 'UNSURE' : o; }
+function flagList(f){
+  if(!f || f==='none') return [];
+  return f.split(';').map(s=>s.trim()).filter(Boolean);
+}
+function flagKey(f){
+  const u = f.toUpperCase();
+  if(u.startsWith('THREAT')) return 'THREAT';
+  if(u.startsWith('NEVER ANSWERED')) return 'NEVER ANSWERED';
+  if(u.startsWith('TWO TOPICS')) return 'TWO TOPICS';
+  if(u.startsWith('UPSET') || u.startsWith('REPEAT')) return 'UPSET / REPEAT';
+  if(u.startsWith('POLICY CHANGE')) return 'POLICY CHANGE';
+  if(u.startsWith('UNSURE')) return 'UNSURE';
+  if(u.startsWith('NOTE')) return 'NOTE';
+  return 'Other';
+}
+function flagsHtml(f){
+  const l = flagList(f);
+  if(!l.length) return '<span class="muted">none</span>';
+  return l.map(x => `<span class="flag ${flagKey(x)==='THREAT'?'threat':''}">${esc(x)}</span>`).join('');
+}
+function cats(c){ return c.startsWith('UNSURE') ? ['UNSURE'] : c.split('+').map(s=>s.trim()); }
+function asOf(){ return $('#fAsOf').value==='run' ? new Date(RUN_TIME) : NOW; }
+function startOf(r){ return new Date(String(r.caseOpened||r.received).slice(0,16).replace(' ','T')); }
+function daysOpen(r){
+  const c = closes[r.id];
+  const end = c ? new Date(c.date+'T23:59:59') : asOf();
+  return Math.max(0,(end-startOf(r))/86400000);
+}
+function liveUrg(r){
+  if(r.answeredBy!=='No reply' || closes[r.id]) return r.urgency;
+  const h = weekdayHours(startOf(r), asOf());
+  const lv = h<=12?'Normal':h<=36?'High':'Very High';
+  return `${lv} (${h.toFixed(1)} h waiting, no reply)`;
+}
+function fmtDT(d){ return d.toLocaleString(undefined,{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); }
+
+/* ---------- filters ---------- */
+function fillSelect(sel, values){
+  sel.innerHTML = '<option value="">All</option>' + values.map(v=>`<option>${esc(v)}</option>`).join('');
+}
+fillSelect($('#fFolder'), [...new Set(DATA.map(r=>r.folder).filter(Boolean))].sort());
+fillSelect($('#fOwner'), ['Lena','Marco','Priya','UNSURE']);
+fillSelect($('#fCat'), [...new Set(DATA.flatMap(r=>cats(r.category)))].sort());
+fillSelect($('#fUrg'), ['Very High','High','Normal']);
+fillSelect($('#fFlag'), ['THREAT','NEVER ANSWERED','UPSET / REPEAT','TWO TOPICS','POLICY CHANGE','UNSURE','NOTE']);
+
+let sortKey = 'urgency', sortDir = 1, openRow = null;
+
+function filtered(){
+  const q = $('#fSearch').value.trim().toLowerCase();
+  const fo = $('#fFolder').value, o = $('#fOwner').value, c = $('#fCat').value, u = $('#fUrg').value, f = $('#fFlag').value, cs = $('#fCase').value;
+  return DATA.filter(r =>
+    (!q || [r.id,r.order,r.subject,r.message,r.category,r.flags].join(' ').toLowerCase().includes(q)) &&
+    (!fo || r.folder===fo) &&
+    (!o || ownerKey(r.owner)===o) &&
+    (!c || cats(r.category).includes(c)) &&
+    (!u || urgLevel(liveUrg(r))===u) &&
+    (!f || flagList(r.flags).some(x=>flagKey(x)===f)) &&
+    (!cs || (cs==='Closed') === !!closes[r.id])
+  );
+}
+function sorted(rows){
+  const k = sortKey;
+  return rows.slice().sort((a,b)=>{
+    let x, y;
+    if(k==='urgency'){ x=urgRank[urgLevel(liveUrg(a))]; y=urgRank[urgLevel(liveUrg(b))]; if(x===y){x=-daysOpen(a);y=-daysOpen(b);} }
+    else if(k==='caseOpened'){ x=startOf(a); y=startOf(b); }
+    else if(k==='days'){ x=daysOpen(a); y=daysOpen(b); }
+    else if(k==='case'){ x=closes[a.id]?1:0; y=closes[b.id]?1:0; }
+    else { x=String(a[k]); y=String(b[k]); }
+    return (x>y?1:x<y?-1:0)*sortDir;
+  });
+}
+
+/* ---------- tiles ---------- */
+function renderTiles(){
+  const open = DATA.filter(r=>!closes[r.id]);
+  const n = (fn)=>open.filter(fn).length;
+  const tiles = [
+    ['Open cases', open.length, '', ()=>setF({fCase:'Open'})],
+    ['Very High', n(r=>urgLevel(liveUrg(r))==='Very High'), 'u-vh', ()=>setF({fUrg:'Very High',fCase:'Open'})],
+    ['High', n(r=>urgLevel(liveUrg(r))==='High'), 'u-h', ()=>setF({fUrg:'High',fCase:'Open'})],
+    ['Normal', n(r=>urgLevel(liveUrg(r))==='Normal'), 'u-n', ()=>setF({fUrg:'Normal',fCase:'Open'})],
+    ['Never answered', n(r=>/NEVER ANSWERED/.test(r.flags)), '', ()=>setF({fFlag:'NEVER ANSWERED',fCase:'Open'})],
+    ['Threats', n(r=>/THREAT/.test(r.flags)), '', ()=>setF({fFlag:'THREAT',fCase:'Open'})],
+    ['Lena', n(r=>r.owner==='Lena'), '', ()=>setF({fOwner:'Lena',fCase:'Open'})],
+    ['Marco', n(r=>r.owner==='Marco'), '', ()=>setF({fOwner:'Marco',fCase:'Open'})],
+    ['Priya', n(r=>r.owner==='Priya'), '', ()=>setF({fOwner:'Priya',fCase:'Open'})],
+    ['Owner UNSURE', n(r=>r.owner.startsWith('UNSURE')), '', ()=>setF({fOwner:'UNSURE',fCase:'Open'})],
+    ...[...new Set(DATA.map(r=>r.folder).filter(Boolean))].sort().map(f=>[f, n(r=>r.folder===f), '', ()=>setF({fFolder:f,fCase:'Open'})]),
+  ];
+  const el = $('#tiles'); el.innerHTML='';
+  tiles.forEach(([l,v,cls,fn])=>{
+    const b = document.createElement('button'); b.className='tile'; b.type='button';
+    b.innerHTML = `<div class="v">${v}</div><div class="l">${cls?`<span class="pill ${cls}" style="padding:0 4px"><span class="dot"></span></span>`:''}${esc(l)}</div>`;
+    b.onclick = fn; el.appendChild(b);
+  });
+}
+function setF(o){
+  ['fFolder','fOwner','fCat','fUrg','fFlag','fCase'].forEach(k=>$('#'+k).value='');
+  Object.entries(o).forEach(([k,v])=>$('#'+k).value=v);
+  render();
+}
+
+/* ---------- table ---------- */
+function render(){
+  $('#timeLine').textContent = `Last sorted ${fmtDT(new Date(RUN_TIME))} · Times as of ${fmtDT(asOf())}`;
+  renderTiles();
+  const rows = sorted(filtered());
+  $('#countLine').textContent = `Showing ${rows.length} of ${DATA.length} messages · click a row for the message, missing info and close button`;
+  const tb = $('#tbody'); tb.innerHTML = '';
+  rows.forEach(r=>{
+    const c = closes[r.id];
+    const tr = document.createElement('tr'); tr.className='row';
+    tr.innerHTML = `<td><b>${esc(r.id)}</b></td><td>${esc(r.channel)}</td><td>${esc(r.order)}</td>
+      <td class="${r.category.startsWith('UNSURE')?'unsure':''}">${esc(r.category)}</td>
+      <td class="${r.owner.startsWith('UNSURE')?'unsure':''}">${esc(r.owner)}</td>
+      <td>${urgPill(liveUrg(r))}</td><td>${esc(String(r.caseOpened||r.received).replace('T',' '))}</td><td>${daysOpen(r).toFixed(1)}</td>
+      <td>${flagsHtml(r.flags)}</td>
+      <td>${c?`<span class="pill closed"><span class="dot"></span>Closed</span>`:'<span class="muted">Open</span>'}</td>`;
+    tr.onclick = ()=>{ openRow = openRow===r.id?null:r.id; render(); };
+    tb.appendChild(tr);
+    if(openRow===r.id){
+      const d = document.createElement('tr'); d.className='detail';
+      d.innerHTML = `<td colspan="10">
+        <div class="grid2">
+          <div>
+            <div class="note">Received ${esc(String(r.received).replace('T',' '))} ET${r.folder?` · ${esc(r.folder)}`:''} · ${esc(r.subject)}</div>
+            <p style="white-space:pre-wrap;margin:6px 0">${esc(r.message)}</p>
+            <div class="note">Answered by: ${esc(r.answeredBy)}${r.firstResp!=null?` · first response ${r.firstResp} h (clock hours, from the pack)`:''}</div>
+          </div>
+          <div>
+            <dl class="kv"><dt>Missing info</dt><dd>${esc(r.missing)}</dd></dl>
+            ${c ? `<p class="note">Closed by <b>${esc(c.by)}</b> on ${esc(c.date)}.</p>
+                   <button class="btn" type="button" data-reopen="${r.id}">Reopen</button>`
+                : `<div class="closeform">
+                     <label class="note">Closed by<select data-by="${r.id}"><option>Lena</option><option>Marco</option><option>Priya</option></select></label>
+                     <label class="note">Closed date<input type="date" data-date="${r.id}" value="${new Date().toISOString().slice(0,10)}"></label>
+                     <button class="btn primary" type="button" data-close="${r.id}">Close case</button>
+                   </div>`}
+          </div>
+        </div></td>`;
+      d.onclick = e => e.stopPropagation();
+      tb.appendChild(d);
+    }
+  });
+  document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.close;
+    const by=document.querySelector(`[data-by="${id}"]`).value, date=document.querySelector(`[data-date="${id}"]`).value;
+    if(!date) return;
+    closes[id]={by,date}; save(closes); render();
+  });
+  document.querySelectorAll('[data-reopen]').forEach(b=>b.onclick=()=>{ delete closes[b.dataset.reopen]; save(closes); render(); });
+  document.querySelectorAll('th').forEach(th=>{
+    th.textContent = th.textContent.replace(/ [▲▼]$/,'');
+    if(th.dataset.k===sortKey) th.textContent += sortDir>0?' ▲':' ▼';
+  });
+}
+document.querySelectorAll('th').forEach(th=>th.onclick=()=>{
+  if(sortKey===th.dataset.k) sortDir*=-1; else { sortKey=th.dataset.k; sortDir=1; }
+  render();
+});
+['fSearch','fFolder','fOwner','fCat','fUrg','fFlag','fCase','fAsOf'].forEach(id=>$('#'+id).addEventListener('input',render));
+$('#clearBtn').onclick=()=>{ $('#fSearch').value=''; setF({}); };
+$('#exportBtn').onclick=()=>{
+  const lines=['ID,Closed by,Closed date',...Object.entries(closes).map(([k,v])=>`${k},${v.by},${v.date}`)];
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));
+  a.download='closed_cases.csv'; a.click();
+};
+$('#resetBtn').onclick=()=>{ if(confirm('Clear every close saved in this browser?')){ closes={}; save(closes); render(); } };
+
+/* ---------- tabs & theme ---------- */
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.setAttribute('aria-selected', x===t));
+  ['inbox','test','rules'].forEach(n=>$('#tab-'+n).classList.toggle('hidden', n!==t.dataset.tab));
+});
+$('#themeBtn').onclick=()=>{
+  const r=document.documentElement, cur=r.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');
+  r.dataset.theme = cur==='dark'?'light':'dark';
+};
+
+/* ---------- rule-based tester ---------- */
+const has = (t, words) => words.some(w => t.includes(w));
+const RULES = [
+  ['Shipping damage', ['arrived damaged','arrived crushed','box arrived','crushed','damaged in transit','damaged on arrival']],
+  ['Wholesale', ['wholesale','price list','minimum order','distributor','payment terms','our stores']],
+  ['Billing', ['charged twice','charged me','double charge','pending amount','billed','overcharged']],
+  ['Refund/cancellation', ['refund','cancel']],
+  ['Return', ['return','send it back','send back','changed my mind']],
+  ['Warranty', ['warranty','warped','cracked','crack','broke','broken','stopped working','defect','came loose','come loose','loose','bent','rust','wobbl','covered','faulty','chip']],
+  ['Shipping/order status', ['where is my order','has it shipped','has this shipped','shipped yet','tracking','when will i get','order update','still says preparing','arrive','delivery','is the order','haven\'t heard','any update','i\'ve had nothing','no grill','i have nothing','would be here','waited']],
+  ['Campaign news', ['campaign','early bird','prelaunch','pre-launch','backer']],
+  ['Product inquiry', ['does it','does the','can i use','what size','difference','compatible','fit the','fits','propane','charcoal','induction','pre-seasoned','what\'s actually different','how do i look after','what do i use']],
+];
+const OWNER = c => c==='Shipping/order status' ? 'Marco' : 'Lena';
+
+function sortMessage(inp){
+  const subj = inp.subject||'', t = (subj+' \n '+inp.message).toLowerCase();
+  const out = {flags:[], unsure:[]};
+  // category
+  let found = RULES.filter(([c,w])=>has(t,w)).map(([c])=>c);
+  if(found.includes('Shipping damage')) found = found.filter(c=>c!=='Warranty' && c!=='Shipping/order status');
+  if(found.includes('Billing')) found = found.filter(c=>c!=='Refund/cancellation');
+  if(found.length>2){ out.category = 'UNSURE: matches '+found.join(', '); }
+  else if(!found.length){ out.category = 'UNSURE: no rule matched — the message doesn\'t say what the customer wants'; }
+  else out.category = found.join(' + ');
+  if(found.length===2) out.flags.push('TWO TOPICS');
+  // owner
+  if(inp.channel==='Kickstarter') out.owner='Priya';
+  else if(out.category.startsWith('UNSURE')) out.owner='UNSURE: depends on category';
+  else { const os=[...new Set(found.map(OWNER))]; out.owner = os.length>1 ? 'UNSURE: '+os.join(' or ') : os[0]; }
+  // missing info
+  const wr = found.includes('Warranty') || found.includes('Return');
+  const castIron = has(t,['skillet','dutch oven','cast iron']);
+  if(wr){
+    const m=[];
+    if(!inp.order) m.push('order number (or name + delivery ZIP)');
+    if(!has(t,['delivered on','arrived on','was delivered','delivery date'])) m.push('delivery date (not order date)');
+    if(!has(t,['photo','attached','picture'])) m.push('photos (fault + whole item'+(castIron?'; cooking surface':'')+')');
+    if(inp.message.trim().split(/\s+/).length<15) m.push('what happened (more detail)');
+    if(castIron && !has(t,['wash','stor','dry'])) m.push('how it is washed and stored');
+    out.missing = m.length? m.join('; ') : 'none';
+  } else out.missing='n/a';
+  // flags
+  const repeat = has(t,['second time','third time','fourth','again','last two','still waiting','no one has replied','nobody has replied','no reply from']);
+  const upset = has(t,['unacceptable','joke','ridiculous','sort this out','terrible','furious']) || (subj.length>8 && subj===subj.toUpperCase() && /[A-Z]/.test(subj));
+  if(repeat||upset) out.flags.push([upset?'UPSET':null,repeat?'REPEAT':null].filter(Boolean).join(' + '));
+  const threats=[]; if(has(t,['review','one star','1-star','1 star'])) threats.push('review');
+  if(has(t,['a-to-z','a to z'])) threats.push('A-to-Z claim');
+  if(has(t,['chargeback','dispute the charge','disputing the charge','my bank'])) threats.push('chargeback');
+  if(threats.length) out.flags.push('THREAT: '+threats.join(', '));
+  if(inp.replied==='no') out.flags.push('NEVER ANSWERED');
+  if(found.includes('Warranty') && (has(t,['dutch oven']) || (has(t,['cast iron']) && !has(t,['skillet'])))) out.flags.push('POLICY CHANGE: depends on [DATE]');
+  if(found.includes('Warranty') && has(t,['rust'])) out.unsure.push('rust is on D08-05\'s not-covered list — a person decides');
+  if(found.includes('Warranty') && has(t,['dropped','fell','came off','tailgate'])) out.unsure.push('possible accidental damage — a person decides');
+  if(found.includes('Warranty') && has(t,['handle']) && has(t,['loose'])) out.unsure.push('loose handles may be normal wear (D08-05) — a person decides');
+  if(found.includes('Shipping damage')) out.unsure.push('D08-05 hasn\'t decided carrier vs us — flag to Lena');
+  if(found.includes('Wholesale')) out.flags.push('NOTE: flag to Lena, quote nothing (D08-05)');
+  if(repeat) out.unsure.push('earlier emails not in pack, real wait is longer');
+  if(has(t,['grill','griddle','pot','table','kit']) && found.includes('Warranty') && !castIron) out.unsure.push('product material not in sources — check if cast-iron rule applies');
+  out.unsure.forEach(u=>out.flags.push('UNSURE: '+u));
+  // urgency
+  const h = Number(inp.hours)||0;
+  const lv = h<=12?'Normal':h<=36?'High':'Very High';
+  out.urgency = `${lv} (${h.toFixed(1)} h${inp.replied==='no'?' waiting, no reply':''})`;
+  out.days = Number(inp.days)||0;
+  return out;
+}
+
+// load pack messages into tester
+DATA.forEach(r=>{ const o=document.createElement('option'); o.value=r.id; o.textContent=`${r.id} · ${r.subject}`; $('#tLoad').appendChild(o); });
+function weekdayHours(a,b){ let t=0,c=new Date(a); while(c<b){ const n=new Date(Math.min(b,new Date(c.getFullYear(),c.getMonth(),c.getDate()+1))); const d=c.getDay(); if(d!==0&&d!==6) t+=(n-c)/3600000; c=n; } return t; }
+$('#tLoad').onchange=()=>{
+  const r = DATA.find(x=>x.id===$('#tLoad').value); $('#tCompare').innerHTML='';
+  if(!r) return;
+  $('#tChannel').value=r.channel; $('#tOrder').value=r.order==='none'?'':r.order;
+  $('#tSubject').value=r.subject; $('#tMsg').value=r.message;
+  $('#tReplied').value = r.answeredBy==='No reply'?'no':'yes'; updHoursLbl();
+  const m = r.urgency.match(/\(([\d.]+) h/); $('#tHours').value = m?m[1]:0;
+  $('#tDays').value = r.days;
+};
+function updHoursLbl(){ $('#tHoursLbl').textContent = $('#tReplied').value==='no' ? 'Weekday hours waiting so far' : 'Weekday hours to first reply'; }
+$('#tReplied').onchange=updHoursLbl;
+$('#tRun').onclick=()=>{
+  const inp={channel:$('#tChannel').value,order:$('#tOrder').value.trim(),subject:$('#tSubject').value,message:$('#tMsg').value,replied:$('#tReplied').value,hours:$('#tHours').value,days:$('#tDays').value};
+  if(!inp.message.trim()){ $('#tOut').textContent='Type or load a message first.'; return; }
+  const o=sortMessage(inp);
+  $('#tOut').innerHTML = `<dl class="kv">
+    <dt>Category</dt><dd class="${o.category.startsWith('UNSURE')?'unsure':''}">${esc(o.category)}</dd>
+    <dt>In charge</dt><dd class="${o.owner.startsWith('UNSURE')?'unsure':''}">${esc(o.owner)}</dd>
+    <dt>Missing info</dt><dd>${esc(o.missing)}</dd>
+    <dt>Flags</dt><dd>${flagsHtml(o.flags.join('; ')||'none')}</dd>
+    <dt>Urgency</dt><dd>${urgPill(o.urgency)}</dd>
+    <dt>Days open</dt><dd>${o.days.toFixed(1)}</dd>
+    <dt>Order #</dt><dd>${esc(inp.order||'none')}</dd>
+  </dl><p class="note" style="margin-top:12px"><b>Sort only. No reply is drafted or sent.</b></p>`;
+  const r = DATA.find(x=>x.id===$('#tLoad').value);
+  if(r && r.message===inp.message){
+    const key=s=>s.split(/[:(]/)[0].split('+').map(x=>x.trim()).sort().join('+'); const same=(a,b)=>key(a)===key(b);
+    $('#tCompare').innerHTML = `<h2 style="margin-top:6px">Compare with the reviewed sort for ${r.id}</h2>
+      <dl class="kv">
+      <dt>Category</dt><dd>${esc(r.category)} ${same(o.category,r.category)?'✓':'<b>≠ differs</b>'}</dd>
+      <dt>In charge</dt><dd>${esc(r.owner)} ${same(o.owner,r.owner)?'✓':'<b>≠ differs</b>'}</dd>
+      <dt>Urgency</dt><dd>${esc(r.urgency)} ${urgLevel(o.urgency)===urgLevel(r.urgency)?'✓':'<b>≠ differs</b>'}</dd>
+      <dt>Flags</dt><dd>${flagsHtml(r.flags)}</dd></dl>
+      <p class="note">Differences show where fixed rules miss judgment a person (or Claude) applied. Worth a look before trusting the tester.</p>`;
+  } else $('#tCompare').innerHTML='';
+};
+
+if(DATA_ISSUES.length){ const b=$('#issues'); b.classList.remove('hidden'); b.innerHTML='<h2>Data issues</h2><ul>'+DATA_ISSUES.map(x=>`<li>${esc(x)}</li>`).join('')+'</ul>'; }
+render();
+</script>
+</body>
+</html>
