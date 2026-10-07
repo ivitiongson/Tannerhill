@@ -73,13 +73,13 @@ Urgency shows which emails are still waiting on us. Count weekday hours only (re
 
 | Status | When | Show as |
 |---|---|---|
-| **Low: Responded** | We have replied ("Answered by" names a person) | "Low: Responded (first reply 30.0 h)" |
+| **Low: Responded** | We have replied ("Answered by" names a person) | "Low: Responded (Lena, 2026-03-03 22:48 ET)": who replied, from "Answered by", and when, = received time + "First response (hours)". If either is missing: "Low: Responded (Unsure, data unavailable)" |
 | **Normal** | Not responded, waiting 0-12 hours | "Normal (8.0 h waiting, no reply)" |
 | **High** | Not responded, waiting more than 12, up to 36 hours | "High (28.2 h waiting, no reply)" |
 | **Very High** | Not responded, waiting more than 36 hours | "Very High (80.5 h waiting, no reply)" |
 
 - Normal, High and Very High are only for emails we have **not** responded to.
-- "First reply" hours come from "First response (hours)", weekday hours only. They show how fast we answered; they don't change the status.
+- Never guess who replied or when. If "Answered by" or "First response (hours)" is blank, write "Unsure, data unavailable".
 
 **When the clock starts:** at the customer's first email after our last reply. Every reply from us resets the clock; it starts again at their next email.
 - One email, no reply: the clock starts at that email.
@@ -112,3 +112,4 @@ End every run with: rows processed, files created, and any rule from section 1 t
 | [date] | Warranty and returns now go to Marco (third claim in a year and money stay with Lena) | D08-05 gives warranty/returns decisions to Marco; Day 8 says "Route to Marco" | [yes/no] | Marco |
 | [date] | In charge: Kickstarter → Priya, wholesale → Lena, everything else → Marco; NOTE flags where D08-04/D08-05 name Lena; people can reassign on the dashboard | One clear owner for most messages, with Lena or Priya assigned by hand when needed | [yes/no] | Marco |
 | [date] | Urgency: "Low: Responded" for anything we've replied to; Normal / High / Very High only for emails not responded to | Show at a glance which emails are still waiting on us | [yes/no] | Marco |
+| [date] | Low: Responded note shows who replied and when ("Answered by" + first response time); "Unsure, data unavailable" if missing | Lena can see who answered each case | [yes/no] | Marco |

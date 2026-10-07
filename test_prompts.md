@@ -84,7 +84,10 @@ Columns: ID | Channel | Order # | Category | In charge | Missing info | Flags | 
 - Flags: TWO TOPICS; UPSET or REPEAT; THREAT (name it);
   NEVER ANSWERED; POLICY CHANGE: depends on [DATE]; UNSURE: reason.
 - Urgency (weekday hours only), per CLAUDE.md:
-  Replied -> "Low: Responded (first reply 30.0 h)".
+  Replied -> "Low: Responded (<Answered by>, <received + First
+  response (hours)> ET)", e.g. "Low: Responded (Lena, 2026-03-03
+  22:48 ET)". Missing info -> "Low: Responded (Unsure, data
+  unavailable)".
   Not responded -> clock from the customer's first email after our
   last reply to the run time: Normal 0-12 h · High >12 to 36 h ·
   Very High >36 h, e.g. "High (28.2 h waiting, no reply)".

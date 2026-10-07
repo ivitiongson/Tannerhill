@@ -6,7 +6,7 @@ placeholders in the <script> block. Do not change layout, styles or code.
   __DATA__     JSON array, one object per message:
                { "id":"CS-01", "channel":"Kickstarter", "folder":"kickstarter",
                  "order":"none", "category":"...", "owner":"...", "missing":"...",
-                 "flags":"... ; ...", "urgency":"Low: Responded (first reply 30.0 h)" or "High (28.2 h waiting, no reply)",
+                 "flags":"... ; ...", "urgency":"Low: Responded (Lena, 2026-03-03 22:48 ET)" or "High (28.2 h waiting, no reply)",
                  "caseOpened":"2026-03-02 09:40", "days":11.6,
                  "received":"2026-03-02T09:40", "subject":"...", "message":"...",
                  "answeredBy":"Priya" or "No reply", "firstResp":144 or null }
@@ -58,7 +58,10 @@ h2{font-size:17px;margin:0 0 10px}
 .tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
 .tab{border:1px solid var(--border);background:var(--surface);color:var(--ink);padding:8px 14px;border-radius:999px;cursor:pointer;font:inherit}
 .tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.tiles{margin-bottom:14px}
+.tilerow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.tilehead{font-size:12px;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
+@media (max-width:700px){.tilerow{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit}
 .tile:hover{border-color:var(--accent)}
 .tile .v{font-size:26px;font-weight:700;line-height:1.1}
@@ -141,7 +144,7 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
 
   <div class="card">
     <div class="note" id="countLine" style="margin-bottom:4px"></div>
-    <div class="note" style="margin-bottom:8px"><b>Note on urgency:</b> Normal, High and Very High are only for emails we have not responded to. Anything we've replied to shows <b>Low: Responded</b>, with how fast our first reply was. Follow-up replies and the customer's answers aren't recorded yet, so check Low cases before closing them.</div>
+    <div class="note" style="margin-bottom:8px"><b>Note on urgency:</b> Normal, High and Very High are only for emails we have not responded to. Anything we've replied to shows <b>Low: Responded</b>, with who replied and when (from "Answered by"). If that's missing it says "Unsure, data unavailable". Follow-up replies and the customer's answers aren't recorded yet, so check Low cases before closing them.</div>
     <div class="tablewrap">
       <table>
         <thead><tr>
@@ -206,7 +209,7 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
       <dt>When unsure</dt><dd>Writes "UNSURE: reason" and flags it to a named person. Never picks the most likely answer.</dd>
       <dt>In charge</dt><dd>Kickstarter channel → Priya · wholesale → Lena · everything else → Marco. Anyone can reassign a case to Lena, Marco or Priya on the Inbox tab. Money, shipping damage and third warranty claims carry a NOTE flag, because D08-04 and D08-05 send those to Lena.</dd>
       <dt>Urgency</dt><dd>Weekday hours only, from the customer's first email after our last reply to our first reply (or to the end of the pack if no reply).<br>
-        <span class="pill u-l"><span class="dot"></span>Low: Responded</span> we have replied ·
+        <span class="pill u-l"><span class="dot"></span>Low: Responded</span> we have replied (shows who replied and when, or "Unsure, data unavailable") ·
         <span class="pill u-n"><span class="dot"></span>Normal</span> not responded, 0–12 h ·
         <span class="pill u-h"><span class="dot"></span>High</span> not responded, more than 12, up to 36 h ·
         <span class="pill u-vh"><span class="dot"></span>Very High</span> not responded, more than 36 h<br>
@@ -328,25 +331,39 @@ function sorted(rows){
 function renderTiles(){
   const open = DATA.filter(r=>!closes[r.id]);
   const n = (fn)=>open.filter(fn).length;
-  const tiles = [
-    ['Open cases', open.length, '', ()=>setF({fCase:'Open'})],
-    ['Very High', n(r=>urgLevel(liveUrg(r))==='Very High'), 'u-vh', ()=>setF({fUrg:'Very High',fCase:'Open'})],
-    ['High', n(r=>urgLevel(liveUrg(r))==='High'), 'u-h', ()=>setF({fUrg:'High',fCase:'Open'})],
-    ['Normal', n(r=>urgLevel(liveUrg(r))==='Normal'), 'u-n', ()=>setF({fUrg:'Normal',fCase:'Open'})],
-    ['Low: Responded', n(r=>urgLevel(liveUrg(r))==='Low: Responded'), 'u-l', ()=>setF({fUrg:'Low: Responded',fCase:'Open'})],
-    ['Never answered', n(r=>/NEVER ANSWERED/.test(r.flags)), '', ()=>setF({fFlag:'NEVER ANSWERED',fCase:'Open'})],
-    ['Threats', n(r=>/THREAT/.test(r.flags)), '', ()=>setF({fFlag:'THREAT',fCase:'Open'})],
-    ['Lena', n(r=>ownerOf(r)==='Lena'), '', ()=>setF({fOwner:'Lena',fCase:'Open'})],
-    ['Marco', n(r=>ownerOf(r)==='Marco'), '', ()=>setF({fOwner:'Marco',fCase:'Open'})],
-    ['Priya', n(r=>ownerOf(r)==='Priya'), '', ()=>setF({fOwner:'Priya',fCase:'Open'})],
-    ['Owner UNSURE', n(r=>ownerOf(r).startsWith('UNSURE')), '', ()=>setF({fOwner:'UNSURE',fCase:'Open'})],
-    ...[...new Set(DATA.map(r=>r.folder).filter(Boolean))].sort().map(f=>[f, n(r=>r.folder===f), '', ()=>setF({fFolder:f,fCase:'Open'})]),
+  const FOLDER_LABEL = {'amazon':'Amazon','kickstarter':'Kickstarter','shared-inbox':'Shared inbox'};
+  const folders = ['amazon','kickstarter','shared-inbox'].concat([...new Set(DATA.map(r=>r.folder).filter(f=>f && !['amazon','kickstarter','shared-inbox'].includes(f)))].sort());
+  const rows = [
+    ['Open cases', [
+      ['Open cases', open.length, '', ()=>setF({fCase:'Open'})],
+    ]],
+    ['Urgency', [
+      ['Very High', n(r=>urgLevel(liveUrg(r))==='Very High'), 'u-vh', ()=>setF({fUrg:'Very High',fCase:'Open'})],
+      ['High', n(r=>urgLevel(liveUrg(r))==='High'), 'u-h', ()=>setF({fUrg:'High',fCase:'Open'})],
+      ['Normal', n(r=>urgLevel(liveUrg(r))==='Normal'), 'u-n', ()=>setF({fUrg:'Normal',fCase:'Open'})],
+      ['Low: Responded', n(r=>urgLevel(liveUrg(r))==='Low: Responded'), 'u-l', ()=>setF({fUrg:'Low: Responded',fCase:'Open'})],
+    ]],
+    ['Needs attention', [
+      ['Never answered', n(r=>/NEVER ANSWERED/.test(r.flags)), '', ()=>setF({fFlag:'NEVER ANSWERED',fCase:'Open'})],
+      ['Threats', n(r=>/THREAT/.test(r.flags)), '', ()=>setF({fFlag:'THREAT',fCase:'Open'})],
+    ]],
+    ['In charge', [
+      ['Marco', n(r=>ownerOf(r)==='Marco'), '', ()=>setF({fOwner:'Marco',fCase:'Open'})],
+      ['Lena', n(r=>ownerOf(r)==='Lena'), '', ()=>setF({fOwner:'Lena',fCase:'Open'})],
+      ['Priya', n(r=>ownerOf(r)==='Priya'), '', ()=>setF({fOwner:'Priya',fCase:'Open'})],
+      ['Owner UNSURE', n(r=>ownerOf(r).startsWith('UNSURE')), '', ()=>setF({fOwner:'UNSURE',fCase:'Open'})],
+    ]],
+    ['Channel', folders.map(f=>[FOLDER_LABEL[f]||f, n(r=>r.folder===f), '', ()=>setF({fFolder:f,fCase:'Open'})])],
   ];
   const el = $('#tiles'); el.innerHTML='';
-  tiles.forEach(([l,v,cls,fn])=>{
-    const b = document.createElement('button'); b.className='tile'; b.type='button';
-    b.innerHTML = `<div class="v">${v}</div><div class="l">${cls?`<span class="pill ${cls}" style="padding:0 4px"><span class="dot"></span></span>`:''}${esc(l)}</div>`;
-    b.onclick = fn; el.appendChild(b);
+  rows.forEach(([title,tiles])=>{
+    const h = document.createElement('div'); h.className='tilehead'; h.textContent=title; el.appendChild(h);
+    const g = document.createElement('div'); g.className='tilerow'; el.appendChild(g);
+    tiles.forEach(([l,v,cls,fn])=>{
+      const b = document.createElement('button'); b.className='tile'; b.type='button';
+      b.innerHTML = `<div class="v">${v}</div><div class="l">${cls?`<span class="pill ${cls}" style="padding:0 4px"><span class="dot"></span></span>`:''}${esc(l)}</div>`;
+      b.onclick = fn; g.appendChild(b);
+    });
   });
 }
 function setF(o){
@@ -511,7 +528,7 @@ function sortMessage(inp){
   // urgency
   const h = Number(inp.hours)||0;
   const lv = h<=12?'Normal':h<=36?'High':'Very High';
-  out.urgency = inp.replied==='no' ? `${lv} (${h.toFixed(1)} h waiting, no reply)` : `Low: Responded (first reply ${h.toFixed(1)} h)`;
+  out.urgency = inp.replied==='no' ? `${lv} (${h.toFixed(1)} h waiting, no reply)` : `Low: Responded (Unsure, data unavailable)`;
   out.days = Number(inp.days)||0;
   return out;
 }
