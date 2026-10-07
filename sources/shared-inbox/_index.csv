@@ -1,0 +1,16 @@
+id,received,channel,from,subject,order_number
+CS-04,2026-03-02 16:48,Shared inbox,dfoster@example.com,Firebox warped,TH-11874
+CS-05,2026-03-03 08:15,Shared inbox,hana.t@example.com,(no subject),TH-14371
+CS-06,2026-03-03 12:30,Shared inbox,hugo.lindqvist@example.com,Return,TH-14219
+CS-08,2026-03-04 10:02,Shared inbox,p.venkat@example.com,Tracking not updating,TH-14340
+CS-12,2026-03-05 11:18,Shared inbox,yasmin.a@example.com,Return - changed my mind,TH-13947
+CS-14,2026-03-06 09:31,Shared inbox,greg.solomon@example.com,Order update?,TH-14356
+CS-15,2026-03-06 15:12,Shared inbox,aoife.mcg@example.com,Rust,TH-13421
+CS-16,2026-03-06 16:40,Shared inbox,j.pike@ridgelineoutfitters.example.com,Wholesale inquiry - Trailhead grill and camp kitchen kits,
+CS-21,2026-03-09 13:40,Shared inbox,w.ackerman@example.com,You said 1-2 days,TH-14288
+CS-22,2026-03-09 17:25,Shared inbox,imogen.p@example.com,Induction?,
+CS-23,2026-03-10 09:10,Shared inbox,t.marchetti@example.com,Table leg,TH-13918
+CS-25,2026-03-10 15:33,Shared inbox,m.oyelaran@example.com,Still waiting,TH-14305
+CS-27,2026-03-11 14:20,Shared inbox,f.oduya@example.com,Arrived damaged,TH-14468
+CS-29,2026-03-12 11:09,Shared inbox,nadia.h@example.com,Handle loose,TH-14212
+CS-31,2026-03-13 10:30,Shared inbox,claire.d@example.com,Skillet order,TH-14402
