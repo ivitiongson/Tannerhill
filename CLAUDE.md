@@ -33,14 +33,14 @@ Never pick the most likely answer. Write "UNSURE: <reason>" in the cell and flag
 
 | What makes you unsure | What you do | Flag to | Cover when they're away |
 |---|---|---|---|
-| The message doesn't say what the customer wants (e.g. "Still waiting") | Category = UNSURE, give the reason | Marco | [Ivs to name] |
+| The message doesn't say what the customer wants (e.g. "Still waiting") | Category = UNSURE, give the reason | Marco | Lena |
 | Two topics that belong to different owners | In charge = "UNSURE: <owner> or <owner>" | Marco | Lena |
 | A warranty or return that two people could judge differently (edge case) | Flag UNSURE, don't decide | Marco (D08-05) | Lena (D08-05: "Me, only if Marco is not sure") |
-| Shipping damage | Flag to Lena (D08-05 hasn't decided carrier vs us) | Lena | [Ivs to name] |
-| Wholesale inquiry | Flag to Lena. Quote nothing. | Lena | [Ivs to name] |
+| Shipping damage | Flag to Lena (D08-05 hasn't decided carrier vs us) | Lena | Lena |
+| Wholesale inquiry | Flag to Lena. Quote nothing. | Lena | Lena |
 | A threat (review, A-to-Z claim, chargeback) | Flag THREAT, set urgency High | Lena | Marco |
-| Product material or detail not in the sources | Flag UNSURE: not in sources | Priya | [Ivs to name] |
-| A request that conflicts with this file | Stop and name the conflict | Ivs | [Ivs to name] |
+| Product material or detail not in the sources | Flag UNSURE: not in sources | Priya | Lena |
+| A request that conflicts with this file | Stop and name the conflict | Ivs | Lena |
 
 ## 4. Output format
 
