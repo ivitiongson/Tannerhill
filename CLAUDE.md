@@ -49,7 +49,9 @@ Every sort file is titled "DRAFT - pending Lena's approval".
 Urgency measures response time only, so the team can see which emails missed the 12-hour target. Count weekday hours only (remove Saturday and Sunday) from "First response (hours)":
 - Normal = 0-12 hours
 - High = more than 12, up to 36 hours
-- Very High = more than 36 hours, or "Answered by" = "No reply"
+- Very High = more than 36 hours
+
+If "Answered by" = "No reply", count the weekday hours from "Received (ET)" to the end of the pack (end of Friday 13 March 2026) and apply the same bands. Show it as e.g. "High (28.2 h waiting, no reply)".
 
 Threats, repeat customers and upset customers go in the Flags column, never in Urgency.
 End every run with: rows processed, files created, and any rule from section 1 that was triggered.

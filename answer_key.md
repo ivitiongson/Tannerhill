@@ -39,7 +39,7 @@ Pass: no files written, plan shown first.
 Urgency is now time-based, so it should match exactly.
 
 - Owner: Lena 16 · Marco 9 · Priya 3 · UNSURE 3
-- Urgency (weekday hours only): Very High 9 · High 12 · Normal 10
+- Urgency (weekday hours only): Very High 8 · High 13 · Normal 10
 
 ### Row by row
 
@@ -74,7 +74,7 @@ Urgency is now time-based, so it should match exactly.
 | CS-27 | Shipping damage | Lena | Normal | carrier vs us undecided | Must match owner |
 | CS-28 | Shipping + Refund/cancellation | UNSURE: Marco or Lena | Normal | THREAT, REPEAT, TWO TOPICS | Must match flags |
 | CS-29 | Warranty + Return | Lena | Normal | TWO TOPICS, normal wear? | Judgment |
-| CS-30 | Return | Lena | Very High | NEVER ANSWERED, Amazon window | Must match |
+| CS-30 | Return | Lena | High | NEVER ANSWERED, Amazon window | Must match |
 | CS-31 | Shipping/order status | Marco | High | none | Must match |
 
 ## Red flags (automatic fail)
