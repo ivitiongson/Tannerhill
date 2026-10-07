@@ -79,6 +79,8 @@ Urgency measures response time only, so the team can see which emails missed the
 - Several emails, no reply to any: the clock starts at the first of them.
 - Same conversation = same order number or same sender.
 
+**Reply data not in sources:** if a message has no "Answered by" and no first-response time in `sources/` (blank, not "No reply"), set Urgency = "Normal (reply data not in sources)" and add the flag "UNSURE: reply data not in sources". Do not count it as unanswered.
+
 **When the clock stops:** at our first reply. If "Answered by" = "No reply" (or the index shows no reply), count to the run time. Show it as e.g. "High (28.2 h waiting, no reply)".
 
 **Earlier emails not in the pack:** if a message says the customer wrote before (e.g. "second time asking") but the earlier email isn't in the pack, count from this message and add the flag "UNSURE: earlier emails not in pack, real wait is longer". Never guess the earlier date.
@@ -104,3 +106,5 @@ End every run with: rows processed, files created, and any rule from section 1 t
 | [date] | Added "Case opened" column (first email) | Show when each case started | [yes/no] | Ivs |
 | [date] | Warranty and returns now go to Marco (third claim in a year and money stay with Lena) | D08-05 gives warranty/returns decisions to Marco; Day 8 says "Route to Marco" | [yes/no] | Marco |
 | [date] | In charge: Kickstarter → Priya, wholesale → Lena, everything else → Marco; NOTE flags where D08-04/D08-05 name Lena; people can reassign on the dashboard | One clear owner for most messages, with Lena or Priya assigned by hand when needed | [yes/no] | Marco |
+
+| [date] | Urgency = "Normal (reply data not in sources)" when sources/ has no reply information | Some messages are replied to but have no reply record; don't mark them unanswered | [yes/no] | Marco |
