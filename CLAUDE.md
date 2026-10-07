@@ -36,6 +36,21 @@ Use no outside knowledge. If the sources don't answer something, write "UNSURE: 
 
 **Run time:** at the start of every run, write the date and time of the run at the top of the output. Use it as the end point for "no reply" waiting time and for days open.
 
+## 2b. Who is in charge
+
+| Message | In charge | Source |
+|---|---|---|
+| Any message from the Kickstarter channel | Priya | Ivs |
+| Wholesale inquiry | Lena | D08-05 ("it comes to me. Nobody quotes anything") |
+| Everything else (order status, shipping, warranty, returns, refunds, billing, shipping damage, product questions, unclear messages) | Marco | Ivs |
+
+- Kickstarter overrides every other row.
+- Add a NOTE flag where the documents name Lena, so Marco knows to check with her:
+  - Refunds, billing, anything about money: "NOTE: money - D08-04 says Lena only"
+  - Shipping damage: "NOTE: D08-05 says shipping damage comes to Lena"
+  - Third warranty claim from the same customer in a year: "NOTE: third claim in a year - D08-05 says this goes to Lena"
+- A person can reassign any case to Lena, Marco or Priya on the dashboard. The agent never reassigns.
+
 ## 3. When you are not sure
 
 Never pick the most likely answer. Write "UNSURE: <reason>" in the cell and flag it.
@@ -43,7 +58,6 @@ Never pick the most likely answer. Write "UNSURE: <reason>" in the cell and flag
 | What makes you unsure | What you do | Flag to | Cover when they're away |
 |---|---|---|---|
 | The message doesn't say what the customer wants (e.g. "Still waiting") | Category = UNSURE, give the reason | Marco | Lena |
-| Two topics that belong to different owners | In charge = "UNSURE: <owner> or <owner>" | Marco | Lena |
 | A warranty or return that two people could judge differently (edge case) | Flag UNSURE, don't decide | Marco (D08-05) | Lena (D08-05: "Me, only if Marco is not sure") |
 | Shipping damage | Flag to Lena (D08-05 hasn't decided carrier vs us) | Lena | Marco |
 | Wholesale inquiry | Flag to Lena. Quote nothing. | Lena | Lena |
@@ -88,3 +102,5 @@ End every run with: rows processed, files created, and any rule from section 1 t
 | [date] | First version | Test 2 failed: no CLAUDE.md in repo | [yes/no] | Ivs |
 | [date] | Sources = everything in `sources/`; end point = run time instead of 13 Mar | New emails arrive in `sources/` automatically (D08-06) | [yes/no] | Ivs |
 | [date] | Added "Case opened" column (first email) | Show when each case started | [yes/no] | Ivs |
+| [date] | Warranty and returns now go to Marco (third claim in a year and money stay with Lena) | D08-05 gives warranty/returns decisions to Marco; Day 8 says "Route to Marco" | [yes/no] | Marco |
+| [date] | In charge: Kickstarter → Priya, wholesale → Lena, everything else → Marco; NOTE flags where D08-04/D08-05 name Lena; people can reassign on the dashboard | One clear owner for most messages, with Lena or Priya assigned by hand when needed | [yes/no] | Marco |

@@ -8,9 +8,9 @@ Use this to mark the agent's output. Source: my run of the same prompt (sort_res
 
 | ID | Must match | Judgment call |
 |---|---|---|
-| CS-04 | Warranty · Lena · High · missing delivery date | UNSURE about grill material |
+| CS-04 | Warranty · Marco · High · missing delivery date | UNSURE about grill material |
 | CS-25 | NEVER ANSWERED · REPEAT · Very High · category or owner = UNSURE | none |
-| CS-28 | THREAT (review, A-to-Z, chargeback) · REPEAT · Normal (3 h) · TWO TOPICS | Owner UNSURE: Marco or Lena |
+| CS-28 | THREAT (review, A-to-Z, chargeback) · REPEAT · Normal (3 h) · TWO TOPICS | Owner Marco, plus NOTE: money flag |
 
 Pass: no files written, plan shown first.
 
@@ -38,7 +38,7 @@ Pass: no files written, plan shown first.
 
 Urgency is now time-based, so it should match exactly.
 
-- Owner: Lena 16 · Marco 9 · Priya 3 · UNSURE 3
+- Owner: Marco 27 · Priya 3 · Lena 1 · UNSURE 0
 - Urgency (weekday hours only): Very High 8 · High 13 · Normal 10
 
 ### Row by row
@@ -47,34 +47,34 @@ Urgency is now time-based, so it should match exactly.
 |---|---|---|---|---|---|
 | CS-01 | Campaign news | Priya | Very High | none | Must match |
 | CS-02 | Shipping/order status | Marco | High | none | Must match |
-| CS-03 | Product inquiry | Lena | Normal | none | Must match |
-| CS-04 | Warranty | Lena | High | missing delivery date | Judgment: material UNSURE |
+| CS-03 | Product inquiry | Marco | Normal | none | Must match |
+| CS-04 | Warranty | Marco | High | missing delivery date | Judgment: material UNSURE |
 | CS-05 | Shipping/order status | Marco | High | none | Must match |
-| CS-06 | Return | Lena | High | missing delivery date, photos | Judgment: unused/packaging UNSURE |
+| CS-06 | Return | Marco | High | missing delivery date, photos | Judgment: unused/packaging UNSURE |
 | CS-07 | Campaign news | Priya | Very High | NEVER ANSWERED | Must match |
 | CS-08 | Shipping/order status | Marco | Normal | none | Must match |
-| CS-09 | Warranty | Lena | Very High | POLICY CHANGE | Judgment: accidental damage UNSURE |
-| CS-10 | Product inquiry | Lena | High | none | Must match |
+| CS-09 | Warranty | Marco | Very High | POLICY CHANGE | Judgment: accidental damage UNSURE |
+| CS-10 | Product inquiry | Marco | High | none | Must match |
 | CS-11 | Shipping/order status | Marco | Normal | deadline 12th | Must match |
-| CS-12 | Return | Lena | High | may be past 30 days | Judgment |
+| CS-12 | Return | Marco | High | may be past 30 days | Judgment |
 | CS-13 | Shipping/order status | Marco | High | UPSET + REPEAT | Must match |
 | CS-14 | Shipping/order status | Marco | High | none | Judgment: may flag UPSET |
-| CS-15 | Warranty | Lena | Normal | rust excluded, NOT policy change | Must match (no policy flag) |
+| CS-15 | Warranty | Marco | Normal | rust excluded, NOT policy change | Must match (no policy flag) |
 | CS-16 | Wholesale | Lena | Normal | deadline 20 Mar | Must match owner |
 | CS-17 | Shipping/order status | Marco | Very High | NEVER ANSWERED | Must match |
 | CS-18 | Product inquiry + Warranty | Priya | Normal | TWO TOPICS | Must match owner |
-| CS-19 | Warranty | Lena | Very High | NEVER ANSWERED, ~14 months | Must match |
-| CS-20 | Billing | Lena | Normal | maybe upset | Judgment |
+| CS-19 | Warranty | Marco | Very High | NEVER ANSWERED, ~14 months | Must match |
+| CS-20 | Billing | Marco | Normal | maybe upset | Judgment |
 | CS-21 | Shipping/order status | Marco | Very High | UPSET | Judgment |
-| CS-22 | Product inquiry | Lena | Very High | none | Must match |
-| CS-23 | Warranty | Lena | High | missing delivery date, photos | Must match |
-| CS-24 | Refund/cancellation + Shipping | UNSURE: Lena or Marco | High | TWO TOPICS, UPSET | Judgment |
-| CS-25 | UNSURE | UNSURE | Very High | NEVER ANSWERED, REPEAT | Must match |
-| CS-26 | Product inquiry | Lena | High | none | Must match |
-| CS-27 | Shipping damage | Lena | Normal | carrier vs us undecided | Must match owner |
-| CS-28 | Shipping + Refund/cancellation | UNSURE: Marco or Lena | Normal | THREAT, REPEAT, TWO TOPICS | Must match flags |
-| CS-29 | Warranty + Return | Lena | Normal | TWO TOPICS, normal wear? | Judgment |
-| CS-30 | Return | Lena | High | NEVER ANSWERED, Amazon window | Must match |
+| CS-22 | Product inquiry | Marco | Very High | none | Must match |
+| CS-23 | Warranty | Marco | High | missing delivery date, photos | Must match |
+| CS-24 | Refund/cancellation + Shipping | Marco | High | TWO TOPICS, UPSET | Judgment |
+| CS-25 | UNSURE | Marco | Very High | NEVER ANSWERED, REPEAT | Must match |
+| CS-26 | Product inquiry | Marco | High | none | Must match |
+| CS-27 | Shipping damage | Marco | Normal | carrier vs us undecided | Must match owner |
+| CS-28 | Shipping + Refund/cancellation | Marco | Normal | THREAT, REPEAT, TWO TOPICS | Must match flags |
+| CS-29 | Warranty + Return | Marco | Normal | TWO TOPICS, normal wear? | Judgment |
+| CS-30 | Return | Marco | High | NEVER ANSWERED, Amazon window | Must match |
 | CS-31 | Shipping/order status | Marco | High | none | Must match |
 
 ## Red flags (automatic fail)

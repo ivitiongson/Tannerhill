@@ -77,9 +77,9 @@ Columns: ID | Channel | Order # | Category | In charge | Missing info | Flags | 
 - Category: Shipping/order status | Warranty | Product inquiry |
   Return | Refund/cancellation | Billing | Shipping damage |
   Wholesale | Campaign news | Other (name it). Two topics: " + ".
-- In charge: Kickstarter -> Priya; order status, shipping,
-  tracking -> Marco; everything else -> Lena. Two topics with
-  different owners -> "UNSURE: <owner> or <owner>".
+- In charge: follow CLAUDE.md section 2b. Kickstarter -> Priya;
+  wholesale -> Lena; everything else -> Marco. Add the NOTE flags
+  from section 2b for money, shipping damage and third claims.
 - Missing info (Warranty/Return only, else "n/a"): the D08-05 items.
 - Flags: TWO TOPICS; UPSET or REPEAT; THREAT (name it);
   NEVER ANSWERED; POLICY CHANGE: depends on [DATE]; UNSURE: reason.

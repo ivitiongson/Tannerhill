@@ -154,10 +154,10 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
   </div>
 
   <div class="card">
-    <h2>Closing cases</h2>
-    <p class="note">Only a person closes a case. Closes you make here are saved <b>in this browser only</b>. To share them, download the file below and upload it to the GitHub repo, or copy the Closed by and Closed date into sort_results.md.</p>
-    <button class="btn" id="exportBtn" type="button">Download closes (CSV)</button>
-    <button class="btn" id="resetBtn" type="button">Clear all closes in this browser</button>
+    <h2>Closing and reassigning cases</h2>
+    <p class="note">Only a person closes or reassigns a case. Changes you make here are saved <b>in this browser only</b>. To share them, download the file below and upload it to the GitHub repo, or copy the Closed by and Closed date into sort_results.md.</p>
+    <button class="btn" id="exportBtn" type="button">Download closes and reassignments (CSV)</button>
+    <button class="btn" id="resetBtn" type="button">Clear all closes and reassignments in this browser</button>
   </div>
 </section>
 
@@ -202,7 +202,7 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
       <dt>Does</dt><dd>Sorts each message by category, person in charge, missing info, flags, urgency and days open.</dd>
       <dt>Never</dt><dd>Drafts or sends a reply · changes an order, refund or price · approves or denies a claim · closes a case · edits its own rules.</dd>
       <dt>When unsure</dt><dd>Writes "UNSURE: reason" and flags it to a named person. Never picks the most likely answer.</dd>
-      <dt>In charge</dt><dd>Kickstarter channel → Priya · order status, shipping, tracking → Marco · everything else → Lena · two topics with different owners → UNSURE.</dd>
+      <dt>In charge</dt><dd>Kickstarter channel → Priya · wholesale → Lena · everything else → Marco. Anyone can reassign a case to Lena, Marco or Priya on the Inbox tab. Money, shipping damage and third warranty claims carry a NOTE flag, because D08-04 and D08-05 send those to Lena.</dd>
       <dt>Urgency</dt><dd>Weekday hours only, from the customer's first email after our last reply to our first reply (or to the end of the pack if no reply).<br>
         <span class="pill u-n"><span class="dot"></span>Normal</span> 0–12 h ·
         <span class="pill u-h"><span class="dot"></span>High</span> more than 12, up to 36 h ·
@@ -233,6 +233,11 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 function load(){ try{ return JSON.parse(localStorage.getItem(STORE)) || {}; }catch(e){ return {}; } }
 function save(o){ try{ localStorage.setItem(STORE, JSON.stringify(o)); }catch(e){} }
 let closes = load();
+const ASTORE = 'tannerhill-assign-v1';
+function loadA(){ try{ return JSON.parse(localStorage.getItem(ASTORE)) || {}; }catch(e){ return {}; } }
+function saveA(o){ try{ localStorage.setItem(ASTORE, JSON.stringify(o)); }catch(e){} }
+let assigns = loadA();
+const ownerOf = r => (assigns[r.id] && assigns[r.id].to) || r.owner;
 
 const urgLevel = u => u.startsWith('Very High') ? 'Very High' : u.startsWith('High') ? 'High' : 'Normal';
 const urgRank = {'Very High':0,'High':1,'Normal':2};
@@ -296,7 +301,7 @@ function filtered(){
   return DATA.filter(r =>
     (!q || [r.id,r.order,r.subject,r.message,r.category,r.flags].join(' ').toLowerCase().includes(q)) &&
     (!fo || r.folder===fo) &&
-    (!o || ownerKey(r.owner)===o) &&
+    (!o || ownerKey(ownerOf(r))===o) &&
     (!c || cats(r.category).includes(c)) &&
     (!u || urgLevel(liveUrg(r))===u) &&
     (!f || flagList(r.flags).some(x=>flagKey(x)===f)) &&
@@ -327,10 +332,10 @@ function renderTiles(){
     ['Normal', n(r=>urgLevel(liveUrg(r))==='Normal'), 'u-n', ()=>setF({fUrg:'Normal',fCase:'Open'})],
     ['Never answered', n(r=>/NEVER ANSWERED/.test(r.flags)), '', ()=>setF({fFlag:'NEVER ANSWERED',fCase:'Open'})],
     ['Threats', n(r=>/THREAT/.test(r.flags)), '', ()=>setF({fFlag:'THREAT',fCase:'Open'})],
-    ['Lena', n(r=>r.owner==='Lena'), '', ()=>setF({fOwner:'Lena',fCase:'Open'})],
-    ['Marco', n(r=>r.owner==='Marco'), '', ()=>setF({fOwner:'Marco',fCase:'Open'})],
-    ['Priya', n(r=>r.owner==='Priya'), '', ()=>setF({fOwner:'Priya',fCase:'Open'})],
-    ['Owner UNSURE', n(r=>r.owner.startsWith('UNSURE')), '', ()=>setF({fOwner:'UNSURE',fCase:'Open'})],
+    ['Lena', n(r=>ownerOf(r)==='Lena'), '', ()=>setF({fOwner:'Lena',fCase:'Open'})],
+    ['Marco', n(r=>ownerOf(r)==='Marco'), '', ()=>setF({fOwner:'Marco',fCase:'Open'})],
+    ['Priya', n(r=>ownerOf(r)==='Priya'), '', ()=>setF({fOwner:'Priya',fCase:'Open'})],
+    ['Owner UNSURE', n(r=>ownerOf(r).startsWith('UNSURE')), '', ()=>setF({fOwner:'UNSURE',fCase:'Open'})],
     ...[...new Set(DATA.map(r=>r.folder).filter(Boolean))].sort().map(f=>[f, n(r=>r.folder===f), '', ()=>setF({fFolder:f,fCase:'Open'})]),
   ];
   const el = $('#tiles'); el.innerHTML='';
@@ -358,7 +363,7 @@ function render(){
     const tr = document.createElement('tr'); tr.className='row';
     tr.innerHTML = `<td><b>${esc(r.id)}</b></td><td>${esc(r.channel)}</td><td>${esc(r.order)}</td>
       <td class="${r.category.startsWith('UNSURE')?'unsure':''}">${esc(r.category)}</td>
-      <td class="${r.owner.startsWith('UNSURE')?'unsure':''}">${esc(r.owner)}</td>
+      <td class="${ownerOf(r).startsWith('UNSURE')?'unsure':''}">${esc(ownerOf(r))}${assigns[r.id]?`<div class="muted" style="font-size:12px">reassigned from ${esc(r.owner)}</div>`:''}</td>
       <td>${urgPill(liveUrg(r))}</td><td>${esc(String(r.caseOpened||r.received).replace('T',' '))}</td><td>${daysOpen(r).toFixed(1)}</td>
       <td>${flagsHtml(r.flags)}</td>
       <td>${c?`<span class="pill closed"><span class="dot"></span>Closed</span>`:'<span class="muted">Open</span>'}</td>`;
@@ -374,7 +379,13 @@ function render(){
             <div class="note">Answered by: ${esc(r.answeredBy)}${r.firstResp!=null?` · first response ${r.firstResp} h (clock hours, from the pack)`:''}</div>
           </div>
           <div>
-            <dl class="kv"><dt>Missing info</dt><dd>${esc(r.missing)}</dd></dl>
+            <dl class="kv"><dt>Missing info</dt><dd>${esc(r.missing)}</dd>
+              <dt>Sorted owner</dt><dd>${esc(r.owner)}</dd></dl>
+            <div class="closeform">
+              <label class="note">Assign to<select data-as="${r.id}">${['Marco','Lena','Priya'].map(p=>`<option ${ownerOf(r)===p?'selected':''}>${p}</option>`).join('')}</select></label>
+              <button class="btn" type="button" data-assign="${r.id}">Reassign</button>
+              ${assigns[r.id]?`<button class="btn" type="button" data-unassign="${r.id}">Undo reassign</button><span class="note">Reassigned ${esc(assigns[r.id].date)}</span>`:''}
+            </div>
             ${c ? `<p class="note">Closed by <b>${esc(c.by)}</b> on ${esc(c.date)}.</p>
                    <button class="btn" type="button" data-reopen="${r.id}">Reopen</button>`
                 : `<div class="closeform">
@@ -394,6 +405,12 @@ function render(){
     if(!date) return;
     closes[id]={by,date}; save(closes); render();
   });
+  document.querySelectorAll('[data-assign]').forEach(b=>b.onclick=()=>{
+    const id=b.dataset.assign, to=document.querySelector(`[data-as="${id}"]`).value, r=DATA.find(x=>x.id===id);
+    if(to===r.owner){ delete assigns[id]; } else { assigns[id]={to,date:new Date().toISOString().slice(0,10)}; }
+    saveA(assigns); render();
+  });
+  document.querySelectorAll('[data-unassign]').forEach(b=>b.onclick=()=>{ delete assigns[b.dataset.unassign]; saveA(assigns); render(); });
   document.querySelectorAll('[data-reopen]').forEach(b=>b.onclick=()=>{ delete closes[b.dataset.reopen]; save(closes); render(); });
   document.querySelectorAll('th').forEach(th=>{
     th.textContent = th.textContent.replace(/ [▲▼]$/,'');
@@ -407,12 +424,13 @@ document.querySelectorAll('th').forEach(th=>th.onclick=()=>{
 ['fSearch','fFolder','fOwner','fCat','fUrg','fFlag','fCase','fAsOf'].forEach(id=>$('#'+id).addEventListener('input',render));
 $('#clearBtn').onclick=()=>{ $('#fSearch').value=''; setF({}); };
 $('#exportBtn').onclick=()=>{
-  const lines=['ID,Closed by,Closed date',...Object.entries(closes).map(([k,v])=>`${k},${v.by},${v.date}`)];
+  const ids=[...new Set([...Object.keys(closes),...Object.keys(assigns)])].sort();
+  const lines=['ID,Sorted owner,Assigned to,Assigned date,Closed by,Closed date',...ids.map(k=>{const r=DATA.find(x=>x.id===k)||{owner:''};const a=assigns[k]||{},c=closes[k]||{};return [k,r.owner,a.to||'',a.date||'',c.by||'',c.date||''].join(',');})];
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([lines.join('\n')],{type:'text/csv'}));
-  a.download='closed_cases.csv'; a.click();
+  a.download='case_updates.csv'; a.click();
 };
-$('#resetBtn').onclick=()=>{ if(confirm('Clear every close saved in this browser?')){ closes={}; save(closes); render(); } };
+$('#resetBtn').onclick=()=>{ if(confirm('Clear every close and reassignment saved in this browser?')){ closes={}; assigns={}; save(closes); saveA(assigns); render(); } };
 
 /* ---------- tabs & theme ---------- */
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
@@ -437,7 +455,7 @@ const RULES = [
   ['Campaign news', ['campaign','early bird','prelaunch','pre-launch','backer']],
   ['Product inquiry', ['does it','does the','can i use','what size','difference','compatible','fit the','fits','propane','charcoal','induction','pre-seasoned','what\'s actually different','how do i look after','what do i use']],
 ];
-const OWNER = c => c==='Shipping/order status' ? 'Marco' : 'Lena';
+const OWNER = c => c==='Wholesale' ? 'Lena' : 'Marco';
 
 function sortMessage(inp){
   const subj = inp.subject||'', t = (subj+' \n '+inp.message).toLowerCase();
@@ -452,7 +470,7 @@ function sortMessage(inp){
   if(found.length===2) out.flags.push('TWO TOPICS');
   // owner
   if(inp.channel==='Kickstarter') out.owner='Priya';
-  else if(out.category.startsWith('UNSURE')) out.owner='UNSURE: depends on category';
+  else if(out.category.startsWith('UNSURE')) out.owner='Marco';
   else { const os=[...new Set(found.map(OWNER))]; out.owner = os.length>1 ? 'UNSURE: '+os.join(' or ') : os[0]; }
   // missing info
   const wr = found.includes('Warranty') || found.includes('Return');
@@ -481,6 +499,8 @@ function sortMessage(inp){
   if(found.includes('Warranty') && has(t,['handle']) && has(t,['loose'])) out.unsure.push('loose handles may be normal wear (D08-05) — a person decides');
   if(found.includes('Shipping damage')) out.unsure.push('D08-05 hasn\'t decided carrier vs us — flag to Lena');
   if(found.includes('Wholesale')) out.flags.push('NOTE: flag to Lena, quote nothing (D08-05)');
+  if(inp.channel!=='Kickstarter' && (found.includes('Billing')||found.includes('Refund/cancellation'))) out.flags.push('NOTE: money - D08-04 says Lena only');
+  if(inp.channel!=='Kickstarter' && found.includes('Shipping damage')) out.flags.push('NOTE: D08-05 says shipping damage comes to Lena');
   if(repeat) out.unsure.push('earlier emails not in pack, real wait is longer');
   if(has(t,['grill','griddle','pot','table','kit']) && found.includes('Warranty') && !castIron) out.unsure.push('product material not in sources — check if cast-iron rule applies');
   out.unsure.forEach(u=>out.flags.push('UNSURE: '+u));
