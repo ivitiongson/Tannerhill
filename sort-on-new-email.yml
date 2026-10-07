@@ -1,0 +1,76 @@
+# Save in your repo as: .github/workflows/sort-on-new-email.yml
+# Runs the sort + rebuilds the UI whenever a file is added or changed in sources/.
+# Opens a pull request so a person reads the diff before anything reaches main.
+
+name: Sort new emails
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sources/**"
+  workflow_dispatch: {}   # adds a "Run workflow" button for manual runs
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sort-new-emails
+  cancel-in-progress: false
+
+jobs:
+  sort:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Run Claude Code (sort + rebuild UI)
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: '--allowedTools "Read,Write,Edit,Glob,Grep"'
+          prompt: |
+            Follow CLAUDE.md. A new file was added to sources/.
+
+            PART 1 - SORT
+            Sort every message in sources/ (all three folders).
+            Write the run date and time at the top.
+            Create or replace only output/test_sort_results.md.
+            Columns: ID | Channel | Order # | Category | In charge | Missing info | Flags | Urgency | Case opened | Days open | Closed by | Closed date
+            Use every rule in CLAUDE.md. Never draft a reply, never approve
+            or deny a claim, never close a case. Leave Closed by and Closed
+            date blank. Report messages per folder and any index/file mismatch.
+
+            PART 2 - REBUILD THE UI
+            Rebuild output/index.html from output/test_sort_results.md and
+            sources/, keeping the same layout, tabs, filters, close form and
+            tester as the current output/index.html. Recalculate urgency
+            hours and days open in the browser on page open, using the
+            current time. Show "Last sorted <run time>" and "Times as of <now>".
+
+            Change no other file. End with the CLAUDE.md run report.
+
+      # Hard check: fail if anything outside output/ changed.
+      - name: Guardrail - only output/ may change
+        run: |
+          CHANGED=$(git status --porcelain | awk '{print $2}' | grep -v '^output/' || true)
+          if [ -n "$CHANGED" ]; then
+            echo "Files outside output/ were changed:"
+            echo "$CHANGED"
+            exit 1
+          fi
+
+      - name: Open a pull request for review
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: auto-sort/new-emails
+          title: "Auto-sort: new emails in sources/"
+          commit-message: "Auto-sort new emails and rebuild UI"
+          body: |
+            Triggered by a new or changed file in sources/.
+            DRAFT - pending Lena's approval.
+            Read the diff before merging. Only output/ should change.
+          add-paths: |
+            output/**

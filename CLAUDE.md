@@ -86,5 +86,5 @@ End every run with: rows processed, files created, and any rule from section 1 t
 | Date | What changed | Why | Tests re-run? | Owner |
 |---|---|---|---|---|
 | [date] | First version | Test 2 failed: no CLAUDE.md in repo | [yes/no] | Ivs |
-| [date] | Added "Case opened" column (first email) | Show when each case started | [yes/no] | Ivs |
 | [date] | Sources = everything in `sources/`; end point = run time instead of 13 Mar | New emails arrive in `sources/` automatically (D08-06) | [yes/no] | Ivs |
+| [date] | Added "Case opened" column (first email) | Show when each case started | [yes/no] | Ivs |
