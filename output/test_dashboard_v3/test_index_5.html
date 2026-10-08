@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Are We Okay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f4f6f3; --panel:#ffffff; --fg:#1b211d; --muted:#5b665e; --line:#dfe4dd; --soft:#eef1ec;
+  --accent:#2f5d46; --ly:#a9b3ab; --ks:#c98a2b;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --gray:#8d958f;
+  --good-ink:#0a6e0a; --warn-ink:#8a5a00; --crit-ink:#b02a2a;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141815; --panel:#1c211e; --fg:#eef2ee; --muted:#a7b1a9; --line:#2e3631; --soft:#232a25;
+  --accent:#7fbf9c; --ly:#56605a; --ks:#e0a54a; --gray:#79827c;
+  --good-ink:#5fd35f; --warn-ink:#fab219; --crit-ink:#ff7b7b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141815; --panel:#1c211e; --fg:#eef2ee; --muted:#a7b1a9; --line:#2e3631; --soft:#232a25;
+  --accent:#7fbf9c; --ly:#56605a; --ks:#e0a54a; --gray:#79827c;
+  --good-ink:#5fd35f; --warn-ink:#fab219; --crit-ink:#ff7b7b; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:16px 16px 32px;display:grid;gap:10px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+h1{font-size:26px;font-weight:700;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:2px 0 0}
+.sample{font-family:var(--mono);font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:6px 10px;max-width:520px}
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:460px){.strip{grid-template-columns:1fr}}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:grid;gap:4px;border-top:4px solid var(--gray);align-content:start;color:inherit;text-decoration:none;cursor:pointer}
+a.tile:hover{border-color:var(--accent)}a.tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tile[data-s="good"]{border-top-color:var(--good)}.tile[data-s="warn"]{border-top-color:var(--warn)}.tile[data-s="crit"]{border-top-color:var(--crit)}
+.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.big{font-size:26px;font-weight:700;line-height:1.1}
+.note{color:var(--muted);font-size:12.5px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--soft);white-space:nowrap;width:fit-content}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gray)}
+.pill.good{color:var(--good-ink)}.pill.good::before{background:var(--good)}
+.pill.warn{color:var(--warn-ink)}.pill.warn::before{background:var(--warn)}
+.pill.crit{color:var(--crit-ink)}.pill.crit::before{background:var(--crit)}
+.pill.gray{color:var(--muted)}
+.stale{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--crit-ink);border:1px solid var(--crit);border-radius:4px;padding:0 5px;margin-left:4px;white-space:nowrap}
+details.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:0;scroll-margin-top:8px}
+.pbody{display:grid;gap:12px;padding:2px 16px 14px;min-width:0}
+.pbody>*{min-width:0}
+.ph{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:9px 16px;cursor:pointer;list-style:none}
+.ph::-webkit-details-marker{display:none}
+.ph:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px}
+.arrow::before{content:"▸";color:var(--muted);display:inline-block;width:10px}
+details[open]>.ph .arrow::before{content:"▾"}
+.sumnum{font-weight:700;font-variant-numeric:tabular-nums}
+.sumowner{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.sumowner b{color:var(--fg);font-weight:500}
+.grow{flex:1}
+.toolbar{display:flex;justify-content:flex-end;margin:-2px 0}
+.linkbtn{font:inherit;font-size:12.5px;color:var(--accent);background:none;border:none;padding:0;cursor:pointer;text-decoration:underline}
+h2{font-size:17px;margin:0;font-weight:700}
+.tag{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:6px;font-weight:400}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.meta b{color:var(--fg);font-weight:500}
+.two{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:13px}
+th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+table.mini th{text-transform:none;letter-spacing:0;font-size:12px}
+.bar{position:relative;height:10px;background:var(--soft);border-radius:2px;min-width:110px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0}
+.bar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg)}
+.sortbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.sortbar button{font:inherit;font-size:12.5px;padding:4px 11px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+.sortbar button:hover{border-color:var(--accent)}
+.sortbar button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.sortbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sku{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+svg text{fill:var(--muted);font-family:var(--body);font-size:11px}
+.grayblock{border:1px dashed var(--line);border-radius:6px;padding:12px 14px;color:var(--muted);background:var(--soft)}
+.tip{position:fixed;pointer-events:none;background:var(--fg);color:var(--bg);font-size:12px;padding:6px 9px;border-radius:5px;font-variant-numeric:tabular-nums;z-index:9}
+.bands{font-size:12px;color:var(--muted);margin:0}
+footer{color:var(--muted);font-size:13px}
+footer ul{margin:6px 0 0;padding-left:20px}
+</style></head>
+<body><div class="wrap">
+<header>
+  <div><h1>Are we okay?</h1>
+  <p class="sub">Tannerhill Co. · Today <span id="today">Thu 19 Mar 2026</span> <span class="real-only"> · Sales to 15 Mar · Stock at 16 Mar</span><span class="demo-only" hidden> · Updated 06:00</span></p></div>
+</header>
+<div class="strip"><a class="tile" href="#rev" data-s="warn" data-date="2026-03-15"><div class="lbl">Revenue vs last year · Estimate</div><div class="big">+14%</div><div class="note">$290,806 vs $254,571 <span class="stale" hidden data-rule="daily" data-ref="2026-03-15" data-lag="1">STALE</span></div><span class="pill warn">Watch</span></a><a class="tile" href="#stock" data-s="crit" data-date="2026-03-16"><div class="lbl">Stock running low</div><div class="big">6 red · 2 amber</div><div class="note">of 13 products · 1 to check by hand <span class="stale" hidden data-rule="daily" data-ref="2026-03-16" data-lag="0">STALE</span></div><span class="pill crit">Act now</span></a><a class="tile" href="#ads" data-s="crit" data-date="2025-12-01"><div class="lbl">Ads: losing money after ads</div><div class="big">3 of 13</div><div class="note">products · Dec 2025 · estimate <span class="stale" hidden data-rule="monthly" data-ref="2025-12" data-lag="0">STALE</span></div><span class="pill crit">Act now</span></a><a class="tile" href="#cash" data-s="gray"><div class="lbl">Cash cover</div><div class="big">–</div><div class="note">Waiting on a bank feed</div><span class="pill gray">No data</span></a></div>
+<div class="toolbar"><button type="button" class="linkbtn" id="toggleAll">Expand all</button></div>
+
+<details class="panel" data-s="warn" id="rev" data-date="2026-03-15">
+  <summary class="ph"><span class="arrow" aria-hidden="true"></span><h2>Revenue vs last year <span class="tag">LAGGING · ESTIMATE</span></h2><span class="sumnum">+14%</span><span class="sumowner">Owner <b>Marisa</b> <span class="stale" hidden data-rule="daily" data-ref="2026-03-15" data-lag="1">STALE</span></span><span class="grow"></span><span class="pill warn">Watch</span></summary><div class="pbody">
+  <div class="two">
+    <div><div class="legend"><span><span class="sw" style="background:var(--ly)"></span>Last year, Amazon + Shopify</span><span><span class="sw" style="background:var(--ks)"></span>Last year, Kickstarter</span><span><span class="sw" style="background:var(--accent)"></span>This year (estimate)</span></div><svg viewBox="0 0 560 230" width="100%" role="img" aria-label="Revenue by month, last year vs this year"><line x1="52" x2="552" y1="202.0" y2="202.0" stroke="var(--line)"/><text x="46" y="206.0" text-anchor="end">0</text><line x1="52" x2="552" y1="138.0" y2="138.0" stroke="var(--line)"/><text x="46" y="142.0" text-anchor="end">$50k</text><line x1="52" x2="552" y1="74.0" y2="74.0" stroke="var(--line)"/><text x="46" y="78.0" text-anchor="end">$100k</text><line x1="52" x2="552" y1="10.0" y2="10.0" stroke="var(--line)"/><text x="46" y="14.0" text-anchor="end">$150k</text><path d="M108.3,202.0 V105.3 q0,-4 4,-4 h18.0 q4,0 4,4 V202.0 Z" fill="var(--ly)" data-t="Jan 2025 Amazon + Shopify: $78,686"/><path d="M136.3,202.0 V99.8 q0,-4 4,-4 h18.0 q4,0 4,4 V202.0 Z" fill="var(--accent)" data-t="Jan this year: $82,991"/><text x="135.3" y="222" text-anchor="middle">Jan</text><path d="M275.0,202.0 V94.3 q0,-4 4,-4 h18.0 q4,0 4,4 V202.0 Z" fill="var(--ly)" data-t="Feb 2025 Amazon + Shopify: $87,235"/><path d="M303.0,202.0 V88.6 q0,-4 4,-4 h18.0 q4,0 4,4 V202.0 Z" fill="var(--accent)" data-t="Feb this year: $91,722"/><text x="302.0" y="222" text-anchor="middle">Feb</text><path d="M441.7,202.0 V92.5 q0,-4 4,-4 h18.0 q4,0 4,4 V202.0 Z" fill="var(--ly)" data-t="1–15 Mar 2025 Amazon + Shopify: $88,650"/><path d="M469.7,202.0 V57.4 q0,-4 4,-4 h18.0 q4,0 4,4 V202.0 Z" fill="var(--accent)" data-t="1–15 Mar this year: $116,093"/><text x="468.7" y="222" text-anchor="middle">1–15 Mar</text></svg></div>
+    <div style="display:grid;gap:12px">
+      <div><div class="lbl">Year to date, 1 Jan – 15 Mar · Estimate</div><div class="big">$290,806</div>
+        <div class="note">+14.2% vs $254,571 last year</div></div>
+      <table class="mini">
+        <tr><th>Last year, 1 Jan – 15 Mar</th><th class="n"></th></tr>
+        <tr><td>Amazon + Shopify</td><td class="n">$254,571</td></tr>
+        <tr><td>Kickstarter (pledges collected)</td><td class="n">$0</td></tr>
+        <tr><td><b>Total</b></td><td class="n"><b>$254,571</b></td></tr>
+        <tr><td>Kickstarter this year</td><td class="n">No source</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="bands">Green 25%+ above last year · Amber level with last year up to 25% above · Red below last year</p>
+  <div class="meta"><span>Owner <b>Marisa</b></span><span>Last run <b data-demo="Today 05:00">Sales to 15 Mar 2026</b> <span class="stale" hidden data-rule="daily" data-ref="2026-03-15" data-lag="1">STALE</span></span><span>Refresh <b>Daily, overnight</b></span><span>Source: Last year&#x27;s accounts · sales estimate</span></div>
+</div></details>
+
+<details class="panel" data-s="crit" id="stock" data-date="2026-03-16">
+  <summary class="ph"><span class="arrow" aria-hidden="true"></span><h2>Stock running low <span class="tag">LEADING</span></h2><span class="sumnum">6 red · 2 amber</span><span class="sumowner">Owner <b>Marco</b> <span class="stale" hidden data-rule="daily" data-ref="2026-03-16" data-lag="0">STALE</span></span><span class="grow"></span><span class="pill crit">Act now</span></summary><div class="pbody">
+  <div><div class="big">6 red · 2 amber</div><div class="note">of 13 products · 1 to check by hand</div></div>
+  <div class="sortbar" role="group" aria-label="Sort stock table" data-table="stockT">
+    <span class="lbl">Sort</span>
+    <button type="button" data-k="sales" aria-pressed="false">Best sellers</button>
+    <button type="button" data-k="urgent" aria-pressed="true">Most urgent</button>
+    <button type="button" data-k="sku" aria-pressed="false">SKU</button>
+  </div>
+  <div class="legend"><span><span class="sw" style="background:var(--fg);width:2px"></span>Reorder point (daily sales × 56 days)</span><span>Bar = on hand + on the way</span></div>
+  <div class="tablewrap"><table id="stockT">
+    <thead><tr><th>SKU</th><th>Product</th><th class="n">Sold / day</th><th class="n">On hand</th>
+    <th class="n">On the way</th><th class="n">Reorder pt</th><th class="n">Lead time</th>
+    <th style="min-width:130px">Stock vs reorder point</th><th>Status</th></tr></thead>
+    <tbody><tr data-sales="2.6222" data-urgent="0" data-ratio="0.6401" data-sku="TH-KIT-BS"><td class="sku">TH-KIT-BS</td><td>Camp Kitchen Kit, Basic</td><td class="n">2.6</td><td class="n">94</td><td class="n">–</td><td class="n">147</td><td class="n">42 days</td><td><div class="bar" data-t="TH-KIT-BS Camp Kitchen Kit, Basic: 94 vs reorder point 147"><i style="width:55.7%;background:var(--crit)"></i><u style="left:87.0%"></u></div></td><td><span class="pill crit">Act now</span></td></tr><tr data-sales="1.9889" data-urgent="0" data-ratio="0.3412" data-sku="TH-KIT-DX"><td class="sku">TH-KIT-DX</td><td>Camp Kitchen Kit, Deluxe</td><td class="n">2.0</td><td class="n">38</td><td class="n">–</td><td class="n">111</td><td class="n">42 days</td><td><div class="bar" data-t="TH-KIT-DX Camp Kitchen Kit, Deluxe: 38 vs reorder point 111"><i style="width:29.7%;background:var(--crit)"></i><u style="left:87.0%"></u></div></td><td><span class="pill crit">Act now</span></td></tr><tr data-sales="4.2333" data-urgent="0" data-ratio="0.9322" data-sku="TH-CID-06"><td class="sku">TH-CID-06</td><td>Cast Iron Dutch Oven 6qt</td><td class="n">4.2</td><td class="n">221</td><td class="n">–</td><td class="n">237</td><td class="n">42 days</td><td><div class="bar" data-t="TH-CID-06 Cast Iron Dutch Oven 6qt: 221 vs reorder point 237"><i style="width:81.1%;background:var(--crit)"></i><u style="left:87.0%"></u></div></td><td><span class="pill crit">Act now</span></td></tr><tr data-sales="4.2444" data-urgent="0" data-ratio="0.5343" data-sku="TH-ACC-TL"><td class="sku">TH-ACC-TL</td><td>Fire Poker &amp; Tool Set</td><td class="n">4.2</td><td class="n">127</td><td class="n">–</td><td class="n">238</td><td class="n">42 days</td><td><div class="bar" data-t="TH-ACC-TL Fire Poker &amp; Tool Set: 127 vs reorder point 238"><i style="width:46.5%;background:var(--crit)"></i><u style="left:87.0%"></u></div></td><td><span class="pill crit">Act now</span></td></tr><tr data-sales="1.5889" data-urgent="0" data-ratio="0.9216" data-sku="TH-CKW-08"><td class="sku">TH-CKW-08</td><td>Nesting Cookware Set 8pc</td><td class="n">1.6</td><td class="n">82</td><td class="n">–</td><td class="n">89</td><td class="n">42 days</td><td><div class="bar" data-t="TH-CKW-08 Nesting Cookware Set 8pc: 82 vs reorder point 89"><i style="width:80.1%;background:var(--crit)"></i><u style="left:87.0%"></u></div></td><td><span class="pill crit">Act now</span></td></tr><tr data-sales="6.9000" data-urgent="0" data-ratio="0.8540" data-sku="TH-GRL-01"><td class="sku">TH-GRL-01</td><td>Trailhead Portable Grill</td><td class="n">6.9</td><td class="n">30</td><td class="n">300</td><td class="n">386</td><td class="n">42 days</td><td><div class="bar" data-t="TH-GRL-01 Trailhead Portable Grill: 330 vs reorder point 386"><i style="width:74.3%;background:var(--crit)"></i><u style="left:87.0%"></u></div></td><td><span class="pill crit">Act now</span></td></tr><tr data-sales="9.8111" data-urgent="1" data-ratio="1.0466" data-sku="TH-CIS-10"><td class="sku">TH-CIS-10</td><td>Cast Iron Skillet 10&quot;</td><td class="n">9.8</td><td class="n">575</td><td class="n">–</td><td class="n">549</td><td class="n">42 days</td><td><div class="bar" data-t="TH-CIS-10 Cast Iron Skillet 10&quot;: 575 vs reorder point 549"><i style="width:87.0%;background:var(--warn)"></i><u style="left:83.1%"></u></div></td><td><span class="pill warn">Watch</span></td></tr><tr data-sales="1.2000" data-urgent="1" data-ratio="1.0119" data-sku="TH-GRL-02"><td class="sku">TH-GRL-02</td><td>Trailhead Grill Pro</td><td class="n">1.2</td><td class="n">68</td><td class="n">–</td><td class="n">67</td><td class="n">42 days</td><td><div class="bar" data-t="TH-GRL-02 Trailhead Grill Pro: 68 vs reorder point 67"><i style="width:87.0%;background:var(--warn)"></i><u style="left:85.9%"></u></div></td><td><span class="pill warn">Watch</span></td></tr><tr data-sales="0.0000" data-urgent="2" data-ratio="1000000000.0000" data-sku="TH-GRD-01"><td class="sku">TH-GRD-01</td><td>Griddle Plate</td><td class="n">0.0</td><td class="n">–</td><td class="n">–</td><td class="n">0</td><td class="n">42 days</td><td><div class="bar" data-t="TH-GRD-01 Griddle Plate: – vs reorder point 0"><i style="width:0.0%;background:var(--gray)"></i><u style="left:0.0%"></u></div></td><td><span class="pill gray">No data</span><div class="note">No rows in 3PL export for TNHC-5001</div></td></tr><tr data-sales="1.3778" data-urgent="3" data-ratio="4.1993" data-sku="TH-ACC-PT"><td class="sku">TH-ACC-PT</td><td>Folding Prep Table</td><td class="n">1.4</td><td class="n">324</td><td class="n">–</td><td class="n">77</td><td class="n">42 days</td><td><div class="bar" data-t="TH-ACC-PT Folding Prep Table: 324 vs reorder point 77"><i style="width:87.0%;background:var(--good)"></i><u style="left:29.0%"></u></div></td><td><span class="pill good">Healthy</span></td></tr><tr data-sales="5.4667" data-urgent="3" data-ratio="2.3650" data-sku="TH-ACC-CL"><td class="sku">TH-ACC-CL</td><td>Grill Grate Cleaner Kit</td><td class="n">5.5</td><td class="n">124</td><td class="n">600</td><td class="n">306</td><td class="n">42 days</td><td><div class="bar" data-t="TH-ACC-CL Grill Grate Cleaner Kit: 724 vs reorder point 306"><i style="width:87.0%;background:var(--good)"></i><u style="left:36.8%"></u></div></td><td><span class="pill good">Healthy</span></td></tr><tr data-sales="4.6111" data-urgent="3" data-ratio="2.8735" data-sku="TH-ACC-CP"><td class="sku">TH-ACC-CP</td><td>Insulated Coffee Press</td><td class="n">4.6</td><td class="n">742</td><td class="n">–</td><td class="n">258</td><td class="n">42 days</td><td><div class="bar" data-t="TH-ACC-CP Insulated Coffee Press: 742 vs reorder point 258"><i style="width:87.0%;background:var(--good)"></i><u style="left:30.3%"></u></div></td><td><span class="pill good">Healthy</span></td></tr><tr data-sales="1.8444" data-urgent="3" data-ratio="9.7590" data-sku="TH-ACC-WS"><td class="sku">TH-ACC-WS</td><td>Windshield Panel Set</td><td class="n">1.8</td><td class="n">1,008</td><td class="n">–</td><td class="n">103</td><td class="n">42 days</td><td><div class="bar" data-t="TH-ACC-WS Windshield Panel Set: 1,008 vs reorder point 103"><i style="width:87.0%;background:var(--good)"></i><u style="left:29.0%"></u></div></td><td><span class="pill good">Healthy</span></td></tr></tbody></table></div>
+  
+  <p class="bands">Green more than 14 days of sales above the reorder point · Amber within 14 days · Red at or below the reorder point</p>
+  <div class="meta"><span>Owner <b>Marco</b></span><span>Last run <b data-demo="Today 06:00">16 Mar 2026, 06:00</b> <span class="stale" hidden data-rule="daily" data-ref="2026-03-16" data-lag="0">STALE</span></span><span>Refresh <b>Daily, 06:00</b></span><span>Source: 3PL stock export · Amazon and Shopify sales · supplier orders</span></div>
+</div></details>
+
+<details class="panel" data-s="crit" id="ads" data-date="2025-12-01">
+  <summary class="ph"><span class="arrow" aria-hidden="true"></span><h2>Ads: contribution after ads <span class="tag">LAGGING</span></h2><span class="sumnum">3 losing money</span><span class="sumowner">Owner <b>Priya</b> <span class="stale" hidden data-rule="monthly" data-ref="2025-12" data-lag="0">STALE</span></span><span class="grow"></span><span class="pill crit">Act now</span></summary><div class="pbody">
+  <div><div class="big">3 losing money after ads</div><div class="note">0 amber</div></div>
+  <div class="grayblock">Ad spend is estimated from BidWorks&#x27; budget split.</div>
+  <div class="sortbar" role="group" aria-label="Sort ads table" data-table="adsT">
+    <span class="lbl">Sort</span>
+    <button type="button" data-k="worst" aria-pressed="true">Worst first</button>
+    <button type="button" data-k="spend" aria-pressed="false">Biggest ad spend</button>
+    <button type="button" data-k="contrib" aria-pressed="false">Most contribution</button>
+    <button type="button" data-k="name" aria-pressed="false">Product A–Z</button>
+  </div>
+  <div class="tablewrap"><table id="adsT">
+    <thead><tr><th>Product</th><th class="n">Units</th><th class="n">Contribution</th>
+    <th class="n">Ad spend (est.)</th><th class="n">Ad spend % of contribution</th><th>Status</th></tr></thead>
+    <tbody><tr data-worst="-1.0000" data-spend="98.00" data-contrib="0.00" data-name="Griddle Plate" data-nounits="1"><td>Griddle Plate<div class="sku">TH-GRD-01</div></td><td class="n">0</td><td class="n">$0</td><td class="n">$98</td><td class="n">–</td><td><span class="pill crit">Act now</span></td></tr><tr data-worst="2.3395" data-spend="3150.00" data-contrib="1346.42" data-name="Windshield Panel Set" data-nounits="0"><td>Windshield Panel Set<div class="sku">TH-ACC-WS</div></td><td class="n">64</td><td class="n">$1,346</td><td class="n">$3,150</td><td class="n">234%</td><td><span class="pill crit">Act now</span></td></tr><tr data-worst="1.5009" data-spend="3290.00" data-contrib="2192.03" data-name="Folding Prep Table" data-nounits="0"><td>Folding Prep Table<div class="sku">TH-ACC-PT</div></td><td class="n">58</td><td class="n">$2,192</td><td class="n">$3,290</td><td class="n">150%</td><td><span class="pill crit">Act now</span></td></tr><tr data-worst="0.3180" data-spend="630.00" data-contrib="1981.10" data-name="Grill Grate Cleaner Kit" data-nounits="0"><td>Grill Grate Cleaner Kit<div class="sku">TH-ACC-CL</div></td><td class="n">202</td><td class="n">$1,981</td><td class="n">$630</td><td class="n">32%</td><td><span class="pill good">Healthy</span></td></tr><tr data-worst="0.2100" data-spend="1120.00" data-contrib="5332.60" data-name="Trailhead Grill Pro" data-nounits="0"><td>Trailhead Grill Pro<div class="sku">TH-GRL-02</div></td><td class="n">48</td><td class="n">$5,333</td><td class="n">$1,120</td><td class="n">21%</td><td><span class="pill good">Healthy</span></td></tr><tr data-worst="0.1833" data-spend="490.00" data-contrib="2673.11" data-name="Insulated Coffee Press" data-nounits="0"><td>Insulated Coffee Press<div class="sku">TH-ACC-CP</div></td><td class="n">160</td><td class="n">$2,673</td><td class="n">$490</td><td class="n">18%</td><td><span class="pill good">Healthy</span></td></tr><tr data-worst="0.1819" data-spend="420.00" data-contrib="2308.61" data-name="Fire Poker &amp; Tool Set" data-nounits="0"><td>Fire Poker &amp; Tool Set<div class="sku">TH-ACC-TL</div></td><td class="n">160</td><td class="n">$2,309</td><td class="n">$420</td><td class="n">18%</td><td><span class="pill good">Healthy</span></td></tr><tr data-worst="0.1562" data-spend="532.00" data-contrib="3405.19" data-name="Nesting Cookware Set 8pc" data-nounits="0"><td>Nesting Cookware Set 8pc<div class="sku">TH-CKW-08</div></td><td class="n">68</td><td class="n">$3,405</td><td class="n">$532</td><td class="n">16%</td><td><span class="pill good">Healthy</span></td></tr><tr data-worst="0.1561" data-spend="1050.00" data-contrib="6727.53" data-name="Camp Kitchen Kit, Deluxe" data-nounits="0"><td>Camp Kitchen Kit, Deluxe<div class="sku">TH-KIT-DX</div></td><td class="n">86</td><td class="n">$6,728</td><td class="n">$1,050</td><td class="n">16%</td><td><span class="pill good">Healthy</span></td></tr><tr data-worst="0.1536" data-spend="560.00" data-contrib="3644.96" data-name="Camp Kitchen Kit, Basic" data-nounits="0"><td>Camp Kitchen Kit, Basic<div class="sku">TH-KIT-BS</div></td><td class="n">86</td><td class="n">$3,645</td><td class="n">$560</td><td class="n">15%</td><td><span class="pill good">Healthy</span></td></tr><tr data-worst="0.1105" data-spend="560.00" data-contrib="5067.75" data-name="Cast Iron Dutch Oven 6qt" data-nounits="0"><td>Cast Iron Dutch Oven 6qt<div class="sku">TH-CID-06</div></td><td class="n">150</td><td class="n">$5,068</td><td class="n">$560</td><td class="n">11%</td><td><span class="pill good">Healthy</span></td></tr><tr data-worst="0.1055" data-spend="1470.00" data-contrib="13936.65" data-name="Trailhead Portable Grill" data-nounits="0"><td>Trailhead Portable Grill<div class="sku">TH-GRL-01</div></td><td class="n">202</td><td class="n">$13,937</td><td class="n">$1,470</td><td class="n">11%</td><td><span class="pill good">Healthy</span></td></tr><tr data-worst="0.0946" data-spend="630.00" data-contrib="6658.53" data-name="Cast Iron Skillet 10&quot;" data-nounits="0"><td>Cast Iron Skillet 10&quot;<div class="sku">TH-CIS-10</div></td><td class="n">349</td><td class="n">$6,659</td><td class="n">$630</td><td class="n">9%</td><td><span class="pill good">Healthy</span></td></tr></tbody></table></div>
+  <p class="bands">Green ad spend under 50% of contribution · Amber 50–100% · Red over 100% (losing money after ads)</p>
+  <div class="meta"><span>Owner <b>Priya</b></span><span>Covers <b>Dec 2025</b> <span class="stale" hidden data-rule="monthly" data-ref="2025-12" data-lag="0">STALE</span></span><span>Refresh <b>Monthly, on the 1st</b></span><span>Source: BidWorks report · product margins</span></div>
+</div></details>
+
+<details class="panel" data-s="gray" id="cash">
+  <summary class="ph"><span class="arrow" aria-hidden="true"></span><h2>Cash in the bank <span class="tag">LEADING</span></h2><span class="sumnum">–</span><span class="sumowner">Owner <b>Marisa</b></span><span class="grow"></span><span class="pill gray">No data</span></summary><div class="pbody">
+  <div class="grayblock">Waiting on a bank feed</div>
+  <p class="bands">Green covers 8+ weeks of payments due · Amber 4–8 weeks · Red under 4 weeks</p>
+  <div class="meta"><span>Owner <b>Marisa</b></span><span>Last run <b>never</b></span><span>Refresh <b>-</b></span><span>Source: none</span></div>
+</div></details>
+</div>
+<div class="tip" id="tip" hidden></div>
+<script>
+// DEMO_MODE: pretend the data refreshes daily. No STALE labels, last-run times follow
+// simulated today. Set to false to judge STALE against the real data dates.
+const DEMO_MODE = true;
+const D=(y,m,d)=>new Date(y,m,d);
+const iso=s=>{const [y,m,d]=s.split('-').map(Number);return D(y,m-1,d||1)};
+const now=new Date(), realDay=D(now.getFullYear(),now.getMonth(),now.getDate());
+const SIM_START=iso('2026-03-19'), SIM_ANCHOR=iso('2026-10-08');
+const shift=Math.round((realDay-SIM_ANCHOR)/864e5);
+const today=D(SIM_START.getFullYear(),SIM_START.getMonth(),SIM_START.getDate()+shift);
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+document.getElementById('today').textContent=`${WD[today.getDay()]} ${String(today.getDate()).padStart(2,'0')} ${MO[today.getMonth()]} ${today.getFullYear()}`;
+document.querySelectorAll('.demo-only').forEach(el=>el.hidden=!DEMO_MODE);
+document.querySelectorAll('.real-only').forEach(el=>el.hidden=DEMO_MODE);
+if(DEMO_MODE)document.querySelectorAll('[data-demo]').forEach(el=>el.textContent=el.dataset.demo);
+document.querySelectorAll('.stale[data-rule]').forEach(el=>{
+  if(DEMO_MODE){el.hidden=true;return}
+  let stale;
+  if(el.dataset.rule==='daily'){const need=D(today.getFullYear(),today.getMonth(),today.getDate()-Number(el.dataset.lag));stale=iso(el.dataset.ref)<need}
+  else{const [y,m]=el.dataset.ref.split('-').map(Number);const prev=D(today.getFullYear(),today.getMonth()-1,1);stale=y*12+m<prev.getFullYear()*12+prev.getMonth()+1}
+  el.hidden=!stale});
+document.querySelectorAll('[data-date]').forEach(el=>{if(iso(el.dataset.date)>today)el.hidden=true});
+const panels=[...document.querySelectorAll('details.panel')], toggleAll=document.getElementById('toggleAll');
+const syncToggle=()=>{toggleAll.textContent=panels.every(d=>d.open)?'Collapse all':'Expand all'};
+toggleAll.addEventListener('click',()=>{const open=!panels.every(d=>d.open);panels.forEach(d=>d.open=open);syncToggle()});
+panels.forEach(d=>d.addEventListener('toggle',syncToggle));
+function openPanel(id){const d=document.getElementById(id);if(!d)return;d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}
+document.querySelectorAll('a.tile').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const id=a.getAttribute('href').slice(1);history.replaceState(null,'','#'+id);openPanel(id)}));
+if(location.hash)openPanel(location.hash.slice(1));
+const tip=document.getElementById('tip');
+function showTip(e,t){tip.textContent=t;tip.hidden=false;tip.style.left=Math.min(e.clientX+12,innerWidth-220)+'px';tip.style.top=(e.clientY+12)+'px'}
+document.querySelectorAll('[data-t]').forEach(el=>{el.addEventListener('mousemove',e=>showTip(e,el.dataset.t));el.addEventListener('mouseleave',()=>tip.hidden=true)});
+const sorters={
+  sales:(a,b)=>b.dataset.sales-a.dataset.sales,
+  urgent:(a,b)=>(a.dataset.urgent-b.dataset.urgent)||(a.dataset.ratio-b.dataset.ratio),
+  sku:(a,b)=>a.dataset.sku.localeCompare(b.dataset.sku),
+  worst:(a,b)=>b.dataset.worst-a.dataset.worst,
+  spend:(a,b)=>b.dataset.spend-a.dataset.spend,
+  contrib:(a,b)=>b.dataset.contrib-a.dataset.contrib,
+  name:(a,b)=>a.dataset.name.localeCompare(b.dataset.name)};
+// rows with no units sink to the bottom of every ads sort except A-Z
+const noUnitsLast=(k,f)=>k==='name'?f:(a,b)=>((a.dataset.nounits||0)-(b.dataset.nounits||0))||f(a,b);
+function sortTable(bar,k){const tb=document.querySelector('#'+bar.dataset.table+' tbody');
+  [...tb.rows].sort(noUnitsLast(k,sorters[k])).forEach(r=>tb.appendChild(r));
+  bar.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k?'true':'false'))}
+document.querySelectorAll('.sortbar').forEach(bar=>{
+  bar.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>sortTable(bar,b.dataset.k)));
+  sortTable(bar,bar.querySelector('[aria-pressed="true"]').dataset.k)});
+</script>
+</body></html>
