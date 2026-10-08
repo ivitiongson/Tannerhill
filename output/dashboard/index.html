@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Are We OK?</title>
+<style>
+:root {
+  --page:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --line:#e4e3de;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --gray:#8a8984;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --page:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink2:#c3c2b7; --line:#33332f; }
+}
+:root[data-theme="dark"] { --page:#0d0d0d; --surface:#1a1a19; --ink:#fff; --ink2:#c3c2b7; --line:#33332f; }
+* { box-sizing:border-box }
+body { margin:0; background:var(--page); color:var(--ink);
+  font:15px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; }
+main { max-width:1200px; margin:0 auto; padding:24px 16px 48px }
+h1 { font-size:26px; margin:0 0 4px }
+.lede { color:var(--ink2); margin:0 0 20px }
+.grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(320px,100%),1fr)); gap:16px }
+.card { background:var(--surface); border:1px solid var(--line); border-top:4px solid var(--gray);
+  border-radius:10px; padding:16px; min-width:0 }
+.card.green { border-top-color:var(--good) } .card.amber { border-top-color:var(--warn) }
+.card.red { border-top-color:var(--crit) }
+.card.wide { grid-column:1/-1 }
+header { display:flex; justify-content:space-between; gap:8px; align-items:flex-start }
+h2 { font-size:16px; margin:0 }
+.kind,.muted,.thr { color:var(--ink2); font-size:12px }
+.value { font-size:34px; font-weight:600; margin:10px 0 0 }
+.sub { color:var(--ink2) }
+dl { display:grid; grid-template-columns:auto 1fr; gap:2px 10px; margin:12px 0; font-size:13px }
+dt { color:var(--ink2) } dd { margin:0 }
+.note { font-size:13px; margin:8px 0 }
+.chip { display:inline-block; white-space:nowrap; font-size:12px; font-weight:600; padding:2px 8px;
+  border-radius:999px; border:1px solid currentColor }
+.chip.green { color:var(--good) } .chip.amber { color:#9a6a00 } .chip.red { color:var(--crit) }
+.chip.gray { color:var(--gray) }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chip.amber { color:var(--warn) } }
+:root[data-theme="dark"] .chip.amber { color:var(--warn) }
+.stale { background:var(--crit); color:#fff; font-size:11px; font-weight:700; padding:1px 6px; border-radius:4px }
+.scroll { overflow-x:auto }
+table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px }
+th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top }
+th { color:var(--ink2); font-weight:600 }
+.n { text-align:right; font-variant-numeric:tabular-nums }
+ul { margin:6px 0; padding-left:20px }
+</style></head>
+<body><main>
+<h1>Are we OK?</h1>
+<p class="lede">Tannerhill Co. · page built 2026-10-08 10:58 · sandbox data only</p>
+<div class="grid">
+
+<section class="card gray">
+  <header>
+    <div><h2>Revenue vs last year</h2><div class="kind">Lagging</div></div>
+    <span class="chip gray">○ No source / check</span>
+  </header>
+  <div class="value">No source yet</div>
+  <dl>
+    <dt>Owner</dt><dd>Marisa</dd>
+    <dt>As of</dt><dd>Feed has never run </dd>
+    <dt>Refresh</dt><dd>Daily, overnight</dd>
+  </dl>
+  <p class="note">No live revenue feed yet. Needs daily Amazon and Shopify exports in the same shape as D09-01, D09-02 and D09-03, dropped into output/dashboard/feed/.</p><p class="note">Last year, Jan-Sep 2025 (D02-02, Amazon + Shopify + Kickstarter): <b>$1,549,488</b>.</p><p class="thr">Green = 25%+ above last year · Amber = level to 25% above · Red = below last year</p>
+</section>
+
+<section class="card gray">
+  <header>
+    <div><h2>Cash in the bank</h2><div class="kind">Leading</div></div>
+    <span class="chip gray">○ No source / check</span>
+  </header>
+  <div class="value">No source yet</div>
+  <dl>
+    <dt>Owner</dt><dd>Marisa</dd>
+    <dt>As of</dt><dd>No source </dd>
+    <dt>Refresh</dt><dd>-</dd>
+  </dl>
+  <p class="note">No source yet. Needs a read-only bank feed, or one known balance plus Amazon deposits (D09-02) and PO payments (D07-08).</p><p class="note">When sourced: green = covers 8+ weeks · amber = 4-8 weeks · red = under 4 weeks.</p>
+</section>
+
+<section class="card wide red">
+  <header>
+    <div><h2>Stock running low</h2><div class="kind">Leading</div></div>
+    <span class="chip red">■ Act</span>
+  </header>
+  <div class="value">6 red · 1 amber</div><div class="sub">3 to check by hand</div>
+  <dl>
+    <dt>Owner</dt><dd>Marco</dd>
+    <dt>As of</dt><dd>2026-03-16 06:00 (snapshot_ts) <span class="stale">STALE</span></dd>
+    <dt>Refresh</dt><dd>Daily, 06:00</dd>
+  </dl>
+  <p class="note">Daily sales = average of 28 days, 16 Feb to 15 Mar 2026 (D07-07). Reorder point = daily sales x 56.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Product</th><th class=n>On hand</th><th class=n>On the way</th>
+    <th class=n>Daily sales</th><th class=n>Reorder point</th><th>Lead time</th><th>Status</th></tr></thead>
+    <tbody><tr><td>Camp Kitchen Kit, Basic<div class='muted'>TH-KIT-BS · TNHC-3002</div></td><td class=n>94</td><td class=n>0</td><td class=n>3.5</td><td class=n>194</td><td>42 days</td><td><span class="chip red">■ Act</span></td></tr><tr><td>Cast Iron Dutch Oven 6qt<div class='muted'>TH-CID-06 · TNHC-2006</div></td><td class=n>221</td><td class=n>0</td><td class=n>5.3</td><td class=n>296</td><td>42 days</td><td><span class="chip red">■ Act</span></td></tr><tr><td>Cast Iron Skillet 10&quot;<div class='muted'>TH-CIS-10 · TNHC-2010</div></td><td class=n>575</td><td class=n>0</td><td class=n>12.5</td><td class=n>698</td><td>42 days</td><td><span class="chip red">■ Act</span></td></tr><tr><td>Fire Poker &amp; Tool Set<div class='muted'>TH-ACC-TL · TNHC-4004</div></td><td class=n>127</td><td class=n>0</td><td class=n>5.1</td><td class=n>284</td><td>42 days</td><td><span class="chip red">■ Act</span></td></tr><tr><td>Nesting Cookware Set 8pc<div class='muted'>TH-CKW-08 · TNHC-3008</div></td><td class=n>82</td><td class=n>0</td><td class=n>1.9</td><td class=n>104</td><td>42 days</td><td><span class="chip red">■ Act</span></td></tr><tr><td>Trailhead Portable Grill<div class='muted'>TH-GRL-01 · TNHC-1001</div></td><td class=n>96</td><td class=n>300</td><td class=n>12.0</td><td class=n>672</td><td>42 days</td><td><span class="chip red">■ Act</span></td></tr><tr><td>Camp Kitchen Kit, Deluxe<div class='muted'>TH-KIT-DX · TNHC-3001</div></td><td class=n>153</td><td class=n>0</td><td class=n>2.6</td><td class=n>148</td><td>42 days</td><td><span class="chip amber">▲ Watch</span></td></tr><tr><td>Griddle Plate<div class='muted'>TH-GRD-01 · TNHC-5001</div></td><td class=n>-</td><td class=n>0</td><td class=n>0.0</td><td class=n>0</td><td>42 days</td><td><span class="chip gray">○ Check</span><div class=muted>No rows in 3PL export for TNHC-5001</div></td></tr><tr><td>Trailhead Grill Pro<div class='muted'>TH-GRL-02 · TNHC-1002</div></td><td class=n>68</td><td class=n>0</td><td class=n>0.2</td><td class=n>14</td><td>42 days</td><td><span class="chip gray">○ Check</span><div class=muted>Sales incomplete: Amazon code &#x27;TRAILHEAD-GRILL-PRO&#x27; not found in D07-07</div></td></tr><tr><td>Windshield Panel Set<div class='muted'>TH-ACC-WS · TNHC-4001</div></td><td class=n>1,008</td><td class=n>0</td><td class=n>1.7</td><td class=n>94</td><td>42 days</td><td><span class="chip gray">○ Check</span><div class=muted>Sales incomplete: Shopify handle &#x27;blank&#x27; not found in D07-07</div></td></tr><tr><td>Folding Prep Table<div class='muted'>TH-ACC-PT · TNHC-4002</div></td><td class=n>324</td><td class=n>0</td><td class=n>1.9</td><td class=n>106</td><td>42 days</td><td><span class="chip green">● OK</span></td></tr><tr><td>Grill Grate Cleaner Kit<div class='muted'>TH-ACC-CL · TNHC-4005</div></td><td class=n>124</td><td class=n>600</td><td class=n>7.0</td><td class=n>392</td><td>42 days</td><td><span class="chip green">● OK</span></td></tr><tr><td>Insulated Coffee Press<div class='muted'>TH-ACC-CP · TNHC-4003</div></td><td class=n>742</td><td class=n>0</td><td class=n>5.9</td><td class=n>332</td><td>42 days</td><td><span class="chip green">● OK</span></td></tr></tbody></table></div>
+  <p class="thr">Green = more than 14 days of sales above reorder point · Amber = within 14 days · Red = at or below</p>
+</section>
+
+<section class="card wide red">
+  <header>
+    <div><h2>Ads: contribution after ads</h2><div class="kind">Lagging</div></div>
+    <span class="chip red">■ Act</span>
+  </header>
+  <div class="value">2 losing money</div><div class="sub">0 amber · 2 to check by hand</div>
+  <dl>
+    <dt>Owner</dt><dd>Priya</dd>
+    <dt>As of</dt><dd>Covers Dec 2025 <span class="stale">STALE</span></dd>
+    <dt>Refresh</dt><dd>Monthly, on the 1st</dd>
+  </dl>
+  <p class="note">Ad spend is an estimate. No ad account access yet. Dec 2025 is the latest full month in both D07-07 (units) and D04-02 (spend).</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Product</th><th class=n>Units</th><th class=n>Contribution</th>
+    <th class=n>Ad spend (est.)</th><th class=n>Ad % of contribution</th><th>Status</th></tr></thead>
+    <tbody><tr><td>Folding Prep Table<div class='muted'>TH-ACC-PT</div></td><td class=n>58</td><td class=n>$2,192</td><td class=n>$3,290</td><td class=n>150%</td><td><span class="chip red">■ Act</span></td></tr><tr><td>Griddle Plate<div class='muted'>TH-GRD-01</div></td><td class=n>0</td><td class=n>$0</td><td class=n>$98</td><td class=n>-</td><td><span class="chip red">■ Act</span></td></tr><tr><td>Trailhead Grill Pro<div class='muted'>TH-GRL-02</div></td><td class=n>11</td><td class=n>$1,222</td><td class=n>$1,120</td><td class=n>92%</td><td><span class="chip gray">○ Check</span><div class=muted>Units incomplete: Amazon code &#x27;TRAILHEAD-GRILL-PRO&#x27; not found in D07-07</div></td></tr><tr><td>Windshield Panel Set<div class='muted'>TH-ACC-WS</div></td><td class=n>52</td><td class=n>$1,094</td><td class=n>$3,150</td><td class=n>288%</td><td><span class="chip gray">○ Check</span><div class=muted>Units incomplete: Shopify handle &#x27;blank&#x27; not found in D07-07</div></td></tr><tr><td>Camp Kitchen Kit, Basic<div class='muted'>TH-KIT-BS</div></td><td class=n>86</td><td class=n>$3,645</td><td class=n>$560</td><td class=n>15%</td><td><span class="chip green">● OK</span></td></tr><tr><td>Camp Kitchen Kit, Deluxe<div class='muted'>TH-KIT-DX</div></td><td class=n>86</td><td class=n>$6,728</td><td class=n>$1,050</td><td class=n>16%</td><td><span class="chip green">● OK</span></td></tr><tr><td>Cast Iron Dutch Oven 6qt<div class='muted'>TH-CID-06</div></td><td class=n>150</td><td class=n>$5,068</td><td class=n>$560</td><td class=n>11%</td><td><span class="chip green">● OK</span></td></tr><tr><td>Cast Iron Skillet 10&quot;<div class='muted'>TH-CIS-10</div></td><td class=n>349</td><td class=n>$6,659</td><td class=n>$630</td><td class=n>9%</td><td><span class="chip green">● OK</span></td></tr><tr><td>Fire Poker &amp; Tool Set<div class='muted'>TH-ACC-TL</div></td><td class=n>160</td><td class=n>$2,309</td><td class=n>$420</td><td class=n>18%</td><td><span class="chip green">● OK</span></td></tr><tr><td>Grill Grate Cleaner Kit<div class='muted'>TH-ACC-CL</div></td><td class=n>202</td><td class=n>$1,981</td><td class=n>$630</td><td class=n>32%</td><td><span class="chip green">● OK</span></td></tr><tr><td>Insulated Coffee Press<div class='muted'>TH-ACC-CP</div></td><td class=n>160</td><td class=n>$2,673</td><td class=n>$490</td><td class=n>18%</td><td><span class="chip green">● OK</span></td></tr><tr><td>Nesting Cookware Set 8pc<div class='muted'>TH-CKW-08</div></td><td class=n>68</td><td class=n>$3,405</td><td class=n>$532</td><td class=n>16%</td><td><span class="chip green">● OK</span></td></tr><tr><td>Trailhead Portable Grill<div class='muted'>TH-GRL-01</div></td><td class=n>202</td><td class=n>$13,937</td><td class=n>$1,470</td><td class=n>11%</td><td><span class="chip green">● OK</span></td></tr></tbody></table></div>
+  <p class="thr">Green = ad spend under 50% of contribution · Amber = 50-100% · Red = over 100%</p>
+</section>
+<section class="card gray wide">
+  <header><div><h2>Unmatched product codes</h2>
+  <div class="kind">Codes with no row in D07-06 SKU Crosswalk. Not dropped: listed here until mapped.</div></div>
+  <span class="chip gray">○ 5 codes</span></header>
+  <div class="scroll"><table><thead><tr><th>Code</th><th>Where</th><th>Issue</th></tr></thead>
+  <tbody><tr><td><code>TRAILHEAD-GRILL-PRO-V2</code></td><td>D07-07 Amazon units ordered</td><td>not in D07-06</td></tr><tr><td><code>TRAILHEAD-GRILL-PRO-V2</code></td><td>D07-07 Amazon units refunded</td><td>not in D07-06</td></tr><tr><td><code>windshield-panel-set</code></td><td>D07-07 Shopify net quantity</td><td>not in D07-06</td></tr><tr><td><code>TRAILHEAD-GRILL-PRO</code></td><td>D07-06 (TH-GRL-02 Amazon seller SKU)</td><td>no matching column in D07-07</td></tr><tr><td><code>(blank)</code></td><td>D07-06 (TH-ACC-WS Shopify handle)</td><td>blank in crosswalk (note: &#x27;shopify handle - check&#x27;)</td></tr></tbody></table></div>
+</section>
+<section class="card gray wide">
+  <header><div><h2>Not answered yet</h2></div><span class="chip gray">○ No source</span></header>
+  <ul>
+    <li><b>Reviews / star rating:</b> no source. Needs a weekly ratings export by product from Amazon and Shopify, with one named owner.</li>
+    <li><b>Cash in the bank:</b> no source (see the cash card).</li>
+  </ul>
+</section>
+</div>
+</main></body></html>
