@@ -10,6 +10,7 @@ and `test_index_6.html`); those files are unchanged.
 | `make_load.py` | Writes `load/<table>.csv` (clean, one per table) and `load/ROW_COUNTS.md` |
 | `load/` | The CSVs to import. Header = table columns. `row_no` = primary key (source order), used to page. |
 | `index.html` | The page. Reads every table from Supabase (pages of 1,000), works out the metrics in the browser. |
+| `test_preview.html` | Preview only: same page, but reads the `load/` CSVs instead of Supabase. Works on GitHub Pages with no setup. |
 | `config.js` | Project URL + publishable key. Placeholders: fill in before deploying. Never the secret key. |
 | `build_dashboard.py` | Same metric functions in Python, reading `load/`. Used by the tests. |
 | `tests/test_metrics.py` | Mapping "Checks" tab + dashboard logic, PASS/FAIL |
