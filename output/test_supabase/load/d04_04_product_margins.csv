@@ -1,0 +1,14 @@
+row_no,sku,product,retail_price,landed_unit_cost,product_margin_pct,units_sold_fy25,net_revenue_fy25,contribution_fy25
+1,TH-GRL-01,Trailhead Portable Grill,189,61,0.676,2402,428609,165722
+2,TH-GRL-02,Trailhead Grill Pro,289,97,0.663,626,170656,69546
+3,TH-CIS-10,"Cast Iron Skillet 10""",49,15,0.699,4108,190130,78376
+4,TH-CID-06,Cast Iron Dutch Oven 6qt,89,28,0.69,1916,161028,64732
+5,TH-KIT-DX,"Camp Kitchen Kit, Deluxe",229,82,0.64,951,205612,74394
+6,TH-KIT-BS,"Camp Kitchen Kit, Basic",119,41,0.654,1122,126083,47554
+7,TH-CKW-08,Nesting Cookware Set 8pc,139,46,0.672,813,106706,40712
+8,TH-ACC-WS,Windshield Panel Set,59,22.59,0.617,766,42653,16115
+9,TH-ACC-PT,Folding Prep Table,109,42.72,0.608,528,54286,19955
+10,TH-ACC-CP,Insulated Coffee Press,44,14,0.69,2054,85364,34316
+11,TH-ACC-TL,Fire Poker & Tool Set,39,12,0.681,1791,65963,25842
+12,TH-ACC-CL,Grill Grate Cleaner Kit,24,7,0.717,2311,52383,22665
+13,TH-GRD-01,Griddle Plate,79,26,0.667,2678,210527,119071

@@ -1,0 +1,4 @@
+row_no,supplier,country,supplies,lead_time,payment_terms,minimum_order,notes
+1,Yuhang Metalworks,"Ningbo, China","Grills, skillet, kits, cookware set, accessories, griddle plate",42 days (6 weeks) from PO,"50% deposit with PO, 50% balance on arrival at the 3PL",300 units per SKU per PO (waived for top-ups on a shared container),Sea freight. Prices quoted delivered to the 3PL (DDP). Lead time is PO date to arrival at the 3PL.
+2,Castellan Foundry,China,Cast Iron Dutch Oven 6qt,42 days (6 weeks) from PO,"30% deposit with PO, 70% balance before the container ships",200 units,Separate PO and separate container from Yuhang.
+3,Pinepoint Packaging,US,Shipping boxes and inserts,2 weeks,Net 30,n/a,Ships direct to the 3PL.
