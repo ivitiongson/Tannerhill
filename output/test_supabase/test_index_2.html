@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Are We Okay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f4f6f3; --panel:#ffffff; --fg:#1b211d; --muted:#5b665e; --line:#dfe4dd; --soft:#eef1ec;
+  --accent:#2f5d46; --ly:#a9b3ab; --ks:#c98a2b;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --gray:#8d958f;
+  --good-ink:#0a6e0a; --warn-ink:#8a5a00; --crit-ink:#b02a2a;
+  --body:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#141815; --panel:#1c211e; --fg:#eef2ee; --muted:#a7b1a9; --line:#2e3631; --soft:#232a25;
+  --accent:#7fbf9c; --ly:#56605a; --ks:#e0a54a; --gray:#79827c;
+  --good-ink:#5fd35f; --warn-ink:#fab219; --crit-ink:#ff7b7b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141815; --panel:#1c211e; --fg:#eef2ee; --muted:#a7b1a9; --line:#2e3631; --soft:#232a25;
+  --accent:#7fbf9c; --ly:#56605a; --ks:#e0a54a; --gray:#79827c;
+  --good-ink:#5fd35f; --warn-ink:#fab219; --crit-ink:#ff7b7b; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:16px 16px 32px;display:grid;gap:10px}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px}
+h1{font-size:26px;font-weight:700;margin:0;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:2px 0 0}
+.sample{font-family:var(--mono);font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:6px 10px;max-width:520px}
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:860px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:460px){.strip{grid-template-columns:1fr}}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;display:grid;gap:4px;border-top:4px solid var(--gray);align-content:start;color:inherit;text-decoration:none;cursor:pointer}
+a.tile:hover{border-color:var(--accent)}a.tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tile[data-s="good"]{border-top-color:var(--good)}.tile[data-s="warn"]{border-top-color:var(--warn)}.tile[data-s="crit"]{border-top-color:var(--crit)}
+.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.big{font-size:26px;font-weight:700;line-height:1.1}
+.note{color:var(--muted);font-size:12.5px}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:2px 9px;border-radius:99px;background:var(--soft);white-space:nowrap;width:fit-content}
+.pill::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--gray)}
+.pill.good{color:var(--good-ink)}.pill.good::before{background:var(--good)}
+.pill.warn{color:var(--warn-ink)}.pill.warn::before{background:var(--warn)}
+.pill.crit{color:var(--crit-ink)}.pill.crit::before{background:var(--crit)}
+.pill.gray{color:var(--muted)}
+.stale{font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--crit-ink);border:1px solid var(--crit);border-radius:4px;padding:0 5px;margin-left:4px;white-space:nowrap}
+details.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;min-width:0;scroll-margin-top:8px}
+.pbody{display:grid;gap:12px;padding:2px 16px 14px;min-width:0}
+.pbody>*{min-width:0}
+.ph{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:9px 16px;cursor:pointer;list-style:none}
+.ph::-webkit-details-marker{display:none}
+.ph:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:8px}
+.arrow::before{content:"▸";color:var(--muted);display:inline-block;width:10px}
+details[open]>.ph .arrow::before{content:"▾"}
+.sumnum{font-weight:700;font-variant-numeric:tabular-nums}
+.sumowner{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.sumowner b{color:var(--fg);font-weight:500}
+.grow{flex:1}
+.toolbar{display:flex;justify-content:flex-end;margin:-2px 0}
+.linkbtn{font:inherit;font-size:12.5px;color:var(--accent);background:none;border:none;padding:0;cursor:pointer;text-decoration:underline}
+h2{font-size:17px;margin:0;font-weight:700}
+.tag{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:6px;font-weight:400}
+.meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.meta b{color:var(--fg);font-weight:500}
+.two{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px;align-items:start}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;font-size:13px}
+th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr:last-child td{border-bottom:none}
+table.mini th{text-transform:none;letter-spacing:0;font-size:12px}
+.bar{position:relative;height:10px;background:var(--soft);border-radius:2px;min-width:110px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:0 4px 4px 0}
+.bar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--fg)}
+.sortbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.sortbar button{font:inherit;font-size:12.5px;padding:4px 11px;border-radius:99px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+.sortbar button:hover{border-color:var(--accent)}
+.sortbar button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--panel)}
+.sortbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sku{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--muted)}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+svg text{fill:var(--muted);font-family:var(--body);font-size:11px}
+.grayblock{border:1px dashed var(--line);border-radius:6px;padding:12px 14px;color:var(--muted);background:var(--soft)}
+.tip{position:fixed;pointer-events:none;background:var(--fg);color:var(--bg);font-size:12px;padding:6px 9px;border-radius:5px;font-variant-numeric:tabular-nums;z-index:9}
+.bands{font-size:12px;color:var(--muted);margin:0}
+footer{color:var(--muted);font-size:13px}
+footer ul{margin:6px 0 0;padding-left:20px}
+.rowsread span:first-child{text-transform:uppercase;letter-spacing:.06em}
+.err{color:var(--crit-ink)}
+</style></head>
+<body><div class="wrap">
+<header>
+  <div><h1>Are we okay?</h1>
+  <p class="sub">Tannerhill Co. · Today <span id="today">Fri 03 Apr 2026</span> <span class="real-only" id="realDates"></span><span class="demo-only" hidden> · Updated 06:00</span></p>
+  <p class="sub">Data as of 3 April 2026. March is not closed.</p></div>
+</header>
+<div id="loadErr"></div>
+<div class="strip" id="strip"><div class="note">Loading data from Supabase…</div></div>
+<div class="toolbar"><button type="button" class="linkbtn" id="toggleAll">Expand all</button></div>
+<div id="panels" style="display:grid;gap:10px"></div>
+<footer id="otherRows"></footer>
+</div>
+<div class="tip" id="tip" hidden></div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ---------------------------------------------------------------- reading (Supabase)
+// The only part that changed: rows now come from Supabase instead of the spreadsheets.
+// The metric functions below are the same as build_dashboard.py, line for line.
+const PAGE = 1000;  // Supabase returns at most 1,000 rows per request
+const TABLES = {
+  ledger: 'd10_01_order_ledger', fin: 'd10_02_revenue_by_month',
+  amz_report: 'd10_03_amazon_business_report', amz_refunds: 'd10_04_amazon_refunds_by_order_date',
+  shopify: 'd10_05_shopify_sales_by_product_weekly',
+  amz_ordered: 'd10_06a_amazon_units_ordered', amz_refunded: 'd10_06b_amazon_units_refunded',
+  shp_net: 'd10_06c_shopify_net_quantity', tpl: 'd10_07_3pl_daily_stock',
+  ads_monthly: 'd10_08_bw_monthly_report', invoices: 'd10_09_bw_agency_invoices',
+  pos: 'd10_10_yuhang_po_history', crosswalk: 'd07_06_sku_crosswalk',
+  stock_terms: 'd04_01_supplier_terms', ads_share: 'd04_03_bidworks_spend_by_product',
+  margins: 'd04_04_product_margins',
+};
+// Tables each card reads (for the "Rows read" line and for "missing data")
+const NEEDS = {
+  rev: ['fin', 'amz_ordered'],
+  stock: ['tpl', 'pos', 'stock_terms', 'amz_ordered', 'amz_refunded', 'shp_net', 'crosswalk'],
+  ads: ['ads_monthly', 'ads_share', 'margins', 'amz_ordered', 'amz_refunded', 'shp_net', 'crosswalk'],
+  other: ['ledger', 'amz_report', 'amz_refunds', 'shopify', 'invoices'],
+};
+const T = {}, READ = {}, ERR = {};
+
+async function fetchAll(client, name) {
+  const rows = [];
+  let total = null;
+  for (let from = 0; ; from += PAGE) {
+    const q = client.from(name).select('*', from === 0 ? { count: 'exact' } : undefined)
+      .order('row_no').range(from, from + PAGE - 1);
+    const { data, error, count } = await q;
+    if (error) throw new Error(error.message || String(error));
+    if (from === 0) total = count;
+    rows.push(...data);
+    if (data.length < PAGE) break;
+  }
+  if (total != null && rows.length !== total) throw new Error(`read ${rows.length} of ${total} rows`);
+  return rows;
+}
+
+async function loadAll() {
+  const cfg = window.TANNERHILL_CONFIG || {};
+  const url = cfg.SUPABASE_URL || '', key = cfg.SUPABASE_PUBLISHABLE_KEY || '';
+  let fail = null;
+  if (!window.supabase || !window.supabase.createClient) fail = 'supabase-js did not load from cdn.jsdelivr.net';
+  else if (!url || !key || url.includes('YOUR-PROJECT') || key.includes('REPLACE')) fail = 'config.js still has placeholder values';
+  if (fail) { for (const k in TABLES) ERR[k] = fail; return; }
+  const client = window.supabase.createClient(url, key, { auth: { persistSession: false } });
+  await Promise.all(Object.entries(TABLES).map(async ([k, name]) => {
+    try { T[k] = await fetchAll(client, name); READ[k] = T[k].length; }
+    catch (e) { ERR[k] = e && e.message ? e.message : String(e); }
+  }));
+}
+
+class MissingData extends Error {
+  constructor(keys) { super(keys.map(k => TABLES[k]).join(', ')); this.keys = keys; }
+}
+function need(keys) {
+  const miss = keys.filter(k => !T[k]);
+  if (miss.length) throw new MissingData(miss);
+}
+const table = key => { if (!T[key]) throw new MissingData([key]); return T[key]; };
+
+// ---------------------------------------------------------------- settings (same as build_dashboard.py)
+// Q4 decided 2026-10-09: the page date is fixed at Fri 3 Apr 2026 (the data date).
+const REPORT_DATE = '2026-04-03', REPORT_TS = '2026-04-03 09:00';
+const INCLUDE_KICKSTARTER = true;   // Kickstarter counted in the month rewards shipped (D10-02 recognized column)
+const SALES_WINDOW_DAYS = 90, REORDER_DAYS = 56, BUFFER_DAYS = 14;
+const CONFIRMED_MAPPINGS = [
+  { sku: 'TH-GRL-02', field: 'amazon', code: 'TRAILHEAD-GRILL-PRO-V2', was: 'TRAILHEAD-GRILL-PRO',
+    note: 'same product, newer version; confirmed again 2026-10-09' },
+  { sku: 'TH-ACC-WS', field: 'shopify', code: 'windshield-panel-set', was: null },
+];
+const CONFIRMED_ON = '2026-10-08';
+const EXCLUDE_HOLD_PREFIX = 'HOLD-';
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const num = v => (v === null || v === undefined || v === '' || v === '-') ? 0 : Number(v);
+const iso = s => s ? String(s).slice(0, 10) : null;                       // 'YYYY-MM-DD'
+const ts = s => String(s).replace('T', ' ').slice(0, 16);                  // 'YYYY-MM-DD HH:MM'
+const ymd = s => s.split('-').map(Number);
+const utc = s => { const [y, m, d] = ymd(s); return new Date(Date.UTC(y, m - 1, d)); };
+const addDays = (s, n) => new Date(utc(s).getTime() + n * 864e5).toISOString().slice(0, 10);
+const daysInMonth = (y, m) => new Date(Date.UTC(y, m, 0)).getUTCDate();
+const pad = n => String(n).padStart(2, '0');
+const fmtD = s => { const [y, m, d] = ymd(s); return `${pad(d)} ${MONTHS[m - 1]} ${y}`; };      // %d %b %Y
+const fmtDM = s => { const [, m, d] = ymd(s); return `${pad(d)} ${MONTHS[m - 1]}`; };           // %d %b
+const fmtdM = s => { const [, m, d] = ymd(s); return `${d} ${MONTHS[m - 1]}`; };               // %-d %b
+const fmtWD = s => { const [y, m, d] = ymd(s); return `${WDAYS[utc(s).getUTCDay()]} ${pad(d)} ${MONTHS[m - 1]} ${y}`; };
+const sum = a => a.reduce((x, y) => x + y, 0);
+
+// ---------------------------------------------------------------- crosswalk
+
+function loadCrosswalk(applyConfirmed = true) {
+  const cw = table('crosswalk').map(r => {
+    const notes = (r.notes || '').toLowerCase();
+    return {
+      sku: r.our_sku, product: r.product, tpl: r['3pl_item_code'], shopify: r.shopify_handle,
+      amazon: r.amazon_seller_sku, notes: r.notes || '',
+      not_on_amazon: notes.includes('not on amazon'), not_on_shopify: notes.includes('not on shopify'),
+    };
+  });
+  if (applyConfirmed) for (const m of CONFIRMED_MAPPINGS) for (const c of cw) if (c.sku === m.sku) c[m.field] = m.code;
+  return cw;
+}
+
+function confirmedNote(code) {
+  for (const m of CONFIRMED_MAPPINGS)
+    if (code === m.code || code === m.was) return `Mapped by hand to ${m.sku} ${m.field} code ${m.code} (confirmed ${CONFIRMED_ON}${m.note ? '; ' + m.note : ''})`;
+  return '';
+}
+
+function salesColumns() {
+  const codes = key => [...new Set(table(key).map(r => r.code))];
+  return { amz_ordered: codes('amz_ordered'), amz_refunded: codes('amz_refunded'), shopify: codes('shp_net') };
+}
+
+function unmatchedCodes() {
+  const cw = loadCrosswalk(false);
+  const tplCodes = new Set(cw.filter(c => c.tpl).map(c => c.tpl));
+  const amzCodes = new Set(cw.filter(c => c.amazon).map(c => c.amazon));
+  const shpCodes = new Set(cw.filter(c => c.shopify).map(c => c.shopify));
+  const out = [], stockCodes = new Set();
+  for (const r of table('tpl')) {
+    stockCodes.add(r.item_code);
+    if (!tplCodes.has(r.item_code) && !out.some(u => u.code === r.item_code))
+      out.push({ code: r.item_code, where: 'D10-07 3PL item_code', issue: 'not in D07-06 3PL item code column' });
+  }
+  const cols = salesColumns();
+  for (const [tab, known, label] of [['amz_ordered', amzCodes, 'D10-06a Amazon units ordered'],
+    ['amz_refunded', amzCodes, 'D10-06b Amazon units refunded'], ['shopify', shpCodes, 'D10-06c Shopify net quantity']])
+    for (const code of cols[tab]) if (code && !known.has(code)) out.push({ code, where: label, issue: 'not in D07-06' });
+  for (const c of cw) {
+    if (c.tpl && !stockCodes.has(c.tpl)) out.push({ code: c.tpl, where: `D07-06 (${c.sku} 3PL item code)`, issue: 'no rows in D10-07' });
+    if (c.amazon && !cols.amz_ordered.includes(c.amazon)) out.push({ code: c.amazon, where: `D07-06 (${c.sku} Amazon seller SKU)`, issue: 'no matching column in D10-06a' });
+    if (!c.amazon && !c.not_on_amazon) out.push({ code: '(blank)', where: `D07-06 (${c.sku} Amazon seller SKU)`, issue: 'blank in crosswalk' });
+    if (c.shopify && !cols.shopify.includes(c.shopify)) out.push({ code: c.shopify, where: `D07-06 (${c.sku} Shopify handle)`, issue: 'no matching column in D10-06c' });
+    if (!c.shopify && !c.not_on_shopify) out.push({ code: '(blank)', where: `D07-06 (${c.sku} Shopify handle)`, issue: `blank in crosswalk (note: '${c.notes}')` });
+  }
+  for (const u of out) {
+    let code = u.code;
+    if (code === '(blank)') {
+      const sku = u.where.split('(')[1].split(' ')[0];
+      const m = CONFIRMED_MAPPINGS.find(m => m.sku === sku && m.was === null);
+      code = m ? m.code : code;
+    }
+    u.mapped = confirmedNote(code);
+  }
+  return out;
+}
+
+function incompleteSalesSkus() {
+  const cols = salesColumns(), bad = {};
+  for (const c of loadCrosswalk()) {
+    const reasons = [];
+    if (!c.not_on_amazon && (!c.amazon || !cols.amz_ordered.includes(c.amazon))) reasons.push(`Amazon code '${c.amazon || 'blank'}' not found in D10-06a`);
+    if (!c.not_on_shopify && (!c.shopify || !cols.shopify.includes(c.shopify))) reasons.push(`Shopify handle '${c.shopify || 'blank'}' not found in D10-06c`);
+    if (reasons.length) bad[c.sku] = reasons.join('; ');
+  }
+  return bad;
+}
+
+// ---------------------------------------------------------------- sales history (D10-06a/b/c)
+
+let _units = null;
+function dailyUnits() {
+  if (_units) return _units;
+  const cw = loadCrosswalk();
+  const byAmz = Object.fromEntries(cw.filter(c => c.amazon).map(c => [c.amazon, c.sku]));
+  const byShp = Object.fromEntries(cw.filter(c => c.shopify).map(c => [c.shopify, c.sku]));
+  const out = Object.fromEntries(cw.map(c => [c.sku, {}]));
+  const add = (key, mapping, sign) => {
+    for (const r of table(key)) {
+      const d = iso(r.date);
+      if (d > REPORT_DATE) continue;
+      if (r.code in mapping) { const sku = mapping[r.code]; out[sku][d] = (out[sku][d] || 0) + sign * num(r.units); }
+    }
+  };
+  add('amz_ordered', byAmz, +1);
+  add('amz_refunded', byAmz, -1);
+  add('shp_net', byShp, +1);
+  return (_units = out);
+}
+
+function lastSalesDate() {
+  const last = table('amz_ordered').reduce((m, r) => iso(r.date) > m ? iso(r.date) : m, '');
+  return last < REPORT_DATE ? last : REPORT_DATE;
+}
+
+// ---------------------------------------------------------------- metric 1: revenue
+
+function lastYearByMonth(year) {
+  // D10-02. Kickstarter = 'Kickstarter (recognized when rewards ship)'.
+  // The 'pledges collected' column is cash, not revenue, and is never read.
+  const out = {};
+  for (const r of table('fin')) {
+    const [y, m] = ymd(iso(r.month));
+    if (y !== year) continue;
+    out[MONTHS[m - 1]] = {
+      amazon: num(r.amazon_net_of_refunds), shopify: num(r.shopify_net_of_discounts_and_returns),
+      kickstarter: num(r.kickstarter_recognized_when_rewards_ship), books: r.books,
+    };
+  }
+  return out;
+}
+
+function revenueStatus(thisYear, lastYear) {
+  const change = thisYear / lastYear - 1;
+  if (change >= 0.25) return ['green', change];
+  if (change >= 0) return ['amber', change];
+  return ['red', change];
+}
+
+function metricRevenue() {
+  // Q1 decided 2026-10-09: actual revenue. Year to date = D10-02 Amazon + Shopify for every full
+  // month from January to the last day of sales data, vs the same months last year. Kickstarter is
+  // its own line, counted in the month rewards shipped. A month whose Books is not "Closed" is Draft.
+  need(NEEDS.rev);
+  const end = lastSalesDate(), [ey, em, ed] = ymd(end), start = `${ey}-01-01`;
+  const lastFull = ed === daysInMonth(ey, em) ? em : em - 1;
+  const ly = lastYearByMonth(ey - 1), ty = lastYearByMonth(ey);
+  const chart = [], drafts = [];
+  let lyAs = 0, lyKs = 0, tyAs = 0, tyKs = 0;
+  for (let mo = 1; mo <= lastFull; mo++) {
+    const name = MONTHS[mo - 1];
+    if (!ly[name] || !ty[name]) throw new MissingData(['fin']);
+    const a = ly[name].amazon + ly[name].shopify, k = ly[name].kickstarter, t = ty[name].amazon + ty[name].shopify;
+    lyAs += a; lyKs += k; tyAs += t; tyKs += ty[name].kickstarter;
+    const draft = ty[name].books !== 'Closed';
+    if (draft) drafts.push(name);
+    chart.push({ m: draft ? `${name} (draft)` : name, ly: a, ly_ks: k, ty: t });
+  }
+  const periodEnd = `${ey}-${pad(lastFull)}-${pad(daysInMonth(ey, lastFull))}`;
+  const last = lyAs + (INCLUDE_KICKSTARTER ? lyKs : 0), now = tyAs + (INCLUDE_KICKSTARTER ? tyKs : 0);
+  const [status, change] = revenueStatus(now, last);
+  return {
+    title: 'Revenue vs last year', kind: '', owner: 'Marisa', refresh: 'Daily, overnight',
+    chart, start, end: periodEnd, ly_as: lyAs, ly_ks: lyKs, last_year: last, this_year: now, ty_ks: tyKs, drafts,
+    change, status, headline: signPct(change, 0), as_of: `Sales to ${fmtD(end)}`,
+    stale_rule: 'daily', stale_ref: end, stale_lag: 1, source: 'QuickBooks revenue by month (D10-02)',
+  };
+}
+
+// ---------------------------------------------------------------- metric 2: stock
+
+function snapshotTs() {
+  // Latest D10-07 snapshot on or before the report date
+  return table('tpl').reduce((m, r) => { const t = ts(r.snapshot_ts); return t <= REPORT_TS && t > m ? t : m; }, '');
+}
+const snapshotRows = () => { const s = snapshotTs(); return table('tpl').filter(r => ts(r.snapshot_ts) === s); };
+
+function onHand() {
+  // qty_available at the latest snapshot. qty_on_hand is not used. HOLD- rows left out.
+  const out = {};
+  for (const r of snapshotRows()) {
+    const held = String(r.po_ref || '').startsWith(EXCLUDE_HOLD_PREFIX);
+    out[r.item_code] = (out[r.item_code] || 0) + (held ? 0 : num(r.qty_available));
+  }
+  return out;
+}
+
+function openPos() {
+  // D10-10 POs signed by Lena and not fully arrived. Part shipments share a PO number.
+  const pos = {};
+  for (const r of table('pos')) {
+    const p = pos[r.po_no] || (pos[r.po_no] = { sku: r.our_sku, qty: 0, arrived: 0, signed: null });
+    p.qty += num(r.qty); p.arrived += num(r.qty_arrived);
+    if (r.po_signed_lena) p.signed = iso(r.po_signed_lena);
+  }
+  const out = {};
+  for (const [po, p] of Object.entries(pos)) if (p.signed && p.qty - p.arrived > 0) out[po] = { sku: p.sku, open_qty: p.qty - p.arrived };
+  return out;
+}
+
+function onTheWay() {
+  // D10-07 qty_expected, cross-checked with D10-10 open POs. A PO in both is counted once.
+  const tplToSku = Object.fromEntries(loadCrosswalk().filter(c => c.tpl).map(c => [c.tpl, c.sku]));
+  const totals = {}, detail = [], seen = new Set();
+  for (const r of snapshotRows()) {
+    const q = num(r.qty_expected);
+    if (q <= 0) continue;
+    const sku = tplToSku[r.item_code] ?? null, po = r.po_ref;
+    totals[sku] = (totals[sku] || 0) + q;
+    seen.add(po);
+    detail.push({ sku, po, qty: q, source: 'D10-07 qty_expected' });
+  }
+  for (const [po, p] of Object.entries(openPos())) {
+    if (seen.has(po)) {
+      const line = detail.find(d => d.po === po);
+      line.source += ' + D10-10 (counted once)';
+      if (line.qty !== p.open_qty) line.source += ` - MISMATCH: D10-10 says ${p.open_qty.toFixed(0)}`;
+    } else {
+      totals[p.sku] = (totals[p.sku] || 0) + p.open_qty;
+      detail.push({ sku: p.sku, po, qty: p.open_qty, source: 'D10-10 only (not on 3PL ASN yet)' });
+    }
+  }
+  return [totals, detail];
+}
+
+function leadTimes() {
+  // D04-01 'Supplier terms'. Supplier per SKU: Castellan where the D07-06 notes say so;
+  // Yuhang where the SKU has a PO in D10-10 (Yuhang PO history); otherwise UNSURE.
+  const terms = Object.fromEntries(table('stock_terms').map(r => [r.supplier.split(' ')[0], r.lead_time]));
+  const yuhang = new Set(table('pos').map(r => r.our_sku));
+  const out = {};
+  for (const c of loadCrosswalk()) {
+    const sup = c.notes.toLowerCase().includes('castellan') ? 'Castellan' : yuhang.has(c.sku) ? 'Yuhang' : null;
+    out[c.sku] = sup in terms ? terms[sup].split(' (')[0] : 'UNSURE: supplier not in terms';
+  }
+  return out;
+}
+
+function stockStatus(available, reorderPoint, daily) {
+  const above = available - reorderPoint;
+  if (above <= 0) return 'red';
+  if (above <= BUFFER_DAYS * daily) return 'amber';
+  return 'green';
+}
+
+function stockTable(windowDays = SALES_WINDOW_DAYS) {
+  const cw = loadCrosswalk(), hand = onHand(), [way] = onTheWay(), units = dailyUnits();
+  const end = lastSalesDate(), start = addDays(end, -(windowDays - 1));
+  const incomplete = incompleteSalesSkus(), leads = leadTimes();
+  const out = [];
+  for (const c of cw) {
+    const sold = sum(Object.entries(units[c.sku]).filter(([d]) => start <= d && d <= end).map(([, v]) => v));
+    const daily = sold / windowDays;
+    const row = { sku: c.sku, product: c.product, tpl: c.tpl, on_hand: c.tpl in hand ? hand[c.tpl] : null,
+      on_the_way: way[c.sku] || 0, daily, reorder_point: daily * REORDER_DAYS,
+      lead_time: leads[c.sku] || 'UNSURE: not in D04-01', check: '' };
+    if (row.on_hand === null) Object.assign(row, { status: 'gray', check: 'No rows in 3PL export for ' + c.tpl });
+    else if (c.sku in incomplete) Object.assign(row, { status: 'gray', check: 'Sales incomplete: ' + incomplete[c.sku] });
+    else row.status = stockStatus(row.on_hand + row.on_the_way, row.reorder_point, daily);
+    out.push(row);
+  }
+  out.sort((a, b) => (S_ORDER[a.status] - S_ORDER[b.status]) || cmp(a.product, b.product));
+  return [out, [start, end]];
+}
+
+function metricStock() {
+  need(NEEDS.stock);
+  const [tbl, [start, end]] = stockTable(), snap = snapshotTs();
+  if (!snap) throw new MissingData(['tpl']);
+  const red = tbl.filter(r => r.status === 'red').length, amber = tbl.filter(r => r.status === 'amber').length,
+    gray = tbl.filter(r => r.status === 'gray').length;
+  return {
+    title: 'Stock running low', kind: '', owner: 'Marco', refresh: 'Daily, 06:00',
+    status: red ? 'red' : amber ? 'amber' : 'green', headline: `${red} red · ${amber} amber`,
+    sub: gray ? `${gray} to check by hand` : '', as_of: `${fmtD(snap.slice(0, 10))}, ${snap.slice(11, 16)}`,
+    stale_rule: 'daily', stale_ref: snap.slice(0, 10), stale_lag: 0, table: tbl, window: [start, end],
+    note: `Daily sales = average of ${SALES_WINDOW_DAYS} days, ${fmtDM(start)} to ${fmtD(end)} (D10-06). Reorder point = daily sales x ${REORDER_DAYS}.`,
+  };
+}
+
+// ---------------------------------------------------------------- metric 3: ads
+
+function contributionPerUnit() {
+  return Object.fromEntries(table('margins').map(r => [r.sku, { product: r.product,
+    per_unit: num(r.contribution_fy25) / num(r.units_sold_fy25), contribution: num(r.contribution_fy25), units: num(r.units_sold_fy25) }]));
+}
+const monthlySpend = () => Object.fromEntries(table('ads_monthly').map(r => [iso(r.month).slice(0, 7), num(r.spend)]));
+const budgetShare = () => Object.fromEntries(table('ads_share').map(r => [r.sku, num(r.share_of_budget)]));
+
+function adsMonth() {
+  // Latest full calendar month present in both D10-06 (units) and D10-08 (spend)
+  const days = new Set(Object.values(dailyUnits()).flatMap(per => Object.keys(per)));
+  const full = Object.keys(monthlySpend()).filter(ym => {
+    const [y, m] = ymd(ym);
+    for (let i = 1; i <= daysInMonth(y, m); i++) if (!days.has(`${ym}-${pad(i)}`)) return false;
+    return true;
+  });
+  return full.length ? full.sort().at(-1) : null;
+}
+
+function adsStatus(adSpend, contribution) {
+  if (contribution <= 0) return adSpend > 0 ? 'red' : 'green';
+  const p = adSpend / contribution;
+  if (p > 1) return 'red';
+  if (p >= 0.5) return 'amber';
+  return 'green';
+}
+
+function adsTable() {
+  const ym = adsMonth();
+  if (ym === null) return [[], null];
+  const units = dailyUnits(), cpu = contributionPerUnit(), share = budgetShare(), spend = monthlySpend()[ym];
+  const incomplete = incompleteSalesSkus(), out = [];
+  for (const [sku, c] of Object.entries(cpu)) {
+    const u = sum(Object.entries(units[sku] || {}).filter(([d]) => d.slice(0, 7) === ym).map(([, v]) => v));
+    const contrib = u * c.per_unit;
+    const row = { sku, product: c.product, units: u, per_unit: c.per_unit, contribution: contrib, check: '' };
+    if (!(sku in share)) Object.assign(row, { ad_spend: null, pct: null, status: 'gray', check: 'No share in D04-03' });
+    else {
+      row.ad_spend = spend * share[sku];
+      row.pct = contrib > 0 ? row.ad_spend / contrib : null;
+      if (sku in incomplete) Object.assign(row, { status: 'gray', check: 'Units incomplete: ' + incomplete[sku] });
+      else if (!(sku in units)) Object.assign(row, { status: 'gray', check: 'Not in D07-06 crosswalk' });
+      else row.status = adsStatus(row.ad_spend, contrib);
+    }
+    out.push(row);
+  }
+  out.sort((a, b) => (S_ORDER[a.status] - S_ORDER[b.status]) || cmp(a.product, b.product));
+  return [out, ym];
+}
+
+function metricAds() {
+  need(NEEDS.ads);
+  const [tbl, ym] = adsTable();
+  const card = { title: 'Ads: contribution after ads', kind: '', owner: 'Priya', refresh: 'Monthly, on the 1st' };
+  if (ym === null) return Object.assign(card, { status: 'gray', headline: 'No source yet', as_of: '-', note: 'No full month in both D10-06 and D10-08.' });
+  const [y, m] = ymd(ym);
+  const red = tbl.filter(r => r.status === 'red').length, amber = tbl.filter(r => r.status === 'amber').length,
+    gray = tbl.filter(r => r.status === 'gray').length;
+  return Object.assign(card, {
+    status: red ? 'red' : amber ? 'amber' : 'green', headline: `${red} losing money`,
+    sub: `${amber} amber` + (gray ? ` · ${gray} to check by hand` : ''), as_of: `Covers ${MONTHS[m - 1]} ${y}`,
+    stale_rule: 'monthly', stale_ref: ym, stale_lag: 0, data_date: `${ym}-01`, table: tbl, month: ym,
+    note: "Ad spend is estimated from BidWorks' budget split.",
+  });
+}
+
+// ---------------------------------------------------------------- metric 4: cash
+
+const metricCash = () => ({ title: 'Cash in the bank', kind: '', owner: 'Marisa', refresh: '-', status: 'gray',
+  headline: 'No data', as_of: 'never', note: 'Waiting on a bank feed' });
+
+// ---------------------------------------------------------------- page
+
+const S_CLASS = { green: 'good', amber: 'warn', red: 'crit', gray: 'gray' };
+const S_WORD = { green: 'Healthy', amber: 'Watch', red: 'Act now', gray: 'No data' };
+const S_ORDER = { red: 0, amber: 1, gray: 2, green: 3 };
+const cmp = (a, b) => a < b ? -1 : a > b ? 1 : 0;
+const esc = v => String(v).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#x27;');
+const nf0 = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
+const pill = (status, text) => `<span class="pill ${S_CLASS[status]}">${esc(text || S_WORD[status])}</span>`;
+const money = v => v === null || v === undefined ? '–' : `$${nf0.format(v)}`;
+const pct = v => v === null || v === undefined ? '–' : `${Math.round(v * 100)}%`;
+const n0 = v => v === null || v === undefined ? '–' : nf0.format(v);
+const signPct = (v, dp) => `${v >= 0 ? '+' : '-'}${Math.abs(v * 100).toFixed(dp)}%`;
+
+function staleTag(card) {
+  if (!card.stale_rule) return '';
+  return ` <span class="stale" hidden data-rule="${card.stale_rule}" data-ref="${card.stale_ref}" data-lag="${card.stale_lag}">STALE</span>`;
+}
+
+function rowsRead(keys) {
+  // Rows read from each table this card uses. A failed table shows its name and the error.
+  return `<div class="meta rowsread"><span>Rows read</span>` + keys.map(k => ERR[k]
+    ? `<span class="err">${esc(TABLES[k])}: failed – ${esc(ERR[k])}</span>`
+    : `<span>${esc(TABLES[k])} <b>${n0(READ[k])}</b></span>`).join('') + `</div>`;
+}
+
+function meta(card, lastRunLabel, lastRun, source, demoLastRun) {
+  const demo = demoLastRun ? ` data-demo="${esc(demoLastRun)}"` : '';
+  return `<div class="meta"><span>Owner <b>${esc(card.owner)}</b></span>` +
+    `<span>${esc(lastRunLabel)} <b${demo}>${esc(lastRun)}</b>${staleTag(card)}</span>` +
+    `<span>Refresh <b>${esc(card.refresh)}</b></span><span>Source: ${esc(source)}</span></div>`;
+}
+
+function panelHead(card, pillHtml) {
+  const n = card.status === 'gray' ? '–' : card.headline;
+  return `<summary class="ph"><span class="arrow" aria-hidden="true"></span>` +
+    `<h2>${esc(card.title)}${card.kind ? ` <span class="tag">${esc(card.kind)}</span>` : ''}</h2>` +
+    `<span class="sumnum">${esc(n)}</span>` +
+    `<span class="sumowner">Owner <b>${esc(card.owner)}</b>${staleTag(card)}</span>` +
+    `<span class="grow"></span>${pillHtml}</summary><div class="pbody">`;
+}
+
+function revenueChart(chart) {
+  const W = 560, H = 230, L = 52, B = 28, Tp = 10;
+  const top = Math.max(...chart.map(r => r.ly + r.ly_ks), ...chart.map(r => r.ty || 0), 1);
+  const step = 50000, vmax = (Math.floor(top / step) + 1) * step;
+  const y = v => Tp + (H - B - Tp) * (1 - v / vmax);
+  const s = [];
+  for (let g = 0; g <= vmax; g += step)
+    s.push(`<line x1="${L}" x2="${W - 8}" y1="${y(g).toFixed(1)}" y2="${y(g).toFixed(1)}" stroke="var(--line)"/>` +
+      `<text x="${L - 6}" y="${(y(g) + 4).toFixed(1)}" text-anchor="end">${g ? '$' + Math.floor(g / 1000) + 'k' : '0'}</text>`);
+  const gw = (W - L - 8) / chart.length, bw = Math.min(26, gw * .34);
+  const bar = (x, v0, v1, fill, tip, roundTop) => {
+    const y0 = y(v0), y1 = y(v1), h = y0 - y1;
+    if (h <= 0) return '';
+    const d = roundTop && h > 4
+      ? `M${x.toFixed(1)},${y0.toFixed(1)} V${(y1 + 4).toFixed(1)} q0,-4 4,-4 h${(bw - 8).toFixed(1)} q4,0 4,4 V${y0.toFixed(1)} Z`
+      : `M${x.toFixed(1)},${y0.toFixed(1)} V${y1.toFixed(1)} h${bw.toFixed(1)} V${y0.toFixed(1)} Z`;
+    return `<path d="${d}" fill="${fill}" data-t="${esc(tip)}"/>`;
+  };
+  chart.forEach((r, i) => {
+    const cx = L + gw * i + gw / 2, x1 = cx - bw - 1, hasKs = r.ly_ks > 0;
+    s.push(bar(x1, 0, r.ly, 'var(--ly)', `${r.m} 2025 Amazon + Shopify: $${nf0.format(r.ly)}`, !hasKs));
+    if (hasKs) s.push(bar(x1, r.ly + (vmax * 2 / (H - B - Tp)), r.ly + r.ly_ks, 'var(--ks)', `${r.m} 2025 Kickstarter: $${nf0.format(r.ly_ks)}`, true));
+    if (r.ty !== null) s.push(bar(cx + 1, 0, r.ty, 'var(--accent)', `${r.m} this year: $${nf0.format(r.ty)}`, true));
+    s.push(`<text x="${cx.toFixed(1)}" y="${H - 8}" text-anchor="middle">${r.m}</text>`);
+  });
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Revenue by month, last year vs this year">${s.join('')}</svg>`;
+}
+
+function revenuePanel(rev) {
+  const span = `${fmtdM(rev.start)} – ${fmtdM(rev.end)}`;
+  const legend = '<div class="legend"><span><span class="sw" style="background:var(--ly)"></span>Last year, Amazon + Shopify</span>' +
+    '<span><span class="sw" style="background:var(--ks)"></span>Last year, Kickstarter</span>' +
+    '<span><span class="sw" style="background:var(--accent)"></span>This year</span></div>';
+  return `
+<details class="panel" data-s="${S_CLASS[rev.status]}" id="rev"${dateAttr(rev)}>
+  ${panelHead(rev, pill(rev.status))}
+  <div class="two">
+    <div>${legend}${revenueChart(rev.chart)}</div>
+    <div style="display:grid;gap:12px">
+      <div><div class="lbl">Year to date, ${span}</div><div class="big">${money(rev.this_year)}</div>
+        <div class="note">${signPct(rev.change, 1)} vs ${money(rev.last_year)} last year</div>
+        ${rev.drafts.length ? `<div class="note">Draft: ${esc(rev.drafts.join(', '))} ${rev.start.slice(0, 4)} books are not closed yet.</div>` : ''}</div>
+      <table class="mini">
+        <tr><th>Last year, ${span}</th><th class="n"></th></tr>
+        <tr><td>Amazon + Shopify</td><td class="n">${money(rev.ly_as)}</td></tr>
+        <tr><td>Kickstarter (recognized when rewards ship)</td><td class="n">${money(rev.ly_ks)}</td></tr>
+        <tr><td><b>Total</b></td><td class="n"><b>${money(rev.last_year)}</b></td></tr>
+        <tr><td>Kickstarter this year</td><td class="n">${money(rev.ty_ks)}</td></tr>
+      </table>
+    </div>
+  </div>
+  <p class="bands">Green 25%+ above last year · Amber level with last year up to 25% above · Red below last year</p>
+  ${meta(rev, 'Last run', rev.as_of, rev.source, 'Today 05:00')}
+  ${rowsRead(NEEDS.rev)}
+</div></details>`;
+}
+
+function unmatchedList(unmatched) {
+  // Every product code that doesn't match D07-06, on the page. None is dropped.
+  if (unmatched === null) return '';
+  if (!unmatched.length) return '<div class="note">Every product code matches D07-06.</div>';
+  const still = unmatched.filter(u => !u.mapped).length;
+  return `<div class="note">${unmatched.length} product code(s) do not match D07-06` +
+    (still ? ` (${still} still unmatched)` : '') + `:</div>
+  <div class="tablewrap"><table id="codesT">
+    <thead><tr><th>Code</th><th>Where</th><th>Issue</th><th>Now</th></tr></thead>
+    <tbody>${unmatched.map(u => `<tr><td class="sku">${esc(u.code)}</td><td>${esc(u.where)}</td><td>${esc(u.issue)}</td>` +
+      `<td>${u.mapped ? esc(u.mapped) : pill('gray', 'Still unmatched')}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+function stockPanel(stock, unmatched) {
+  const trs = stock.table.map(r => {
+    const st = r.status, tot = r.on_hand === null ? null : r.on_hand + r.on_the_way, rop = r.reorder_point;
+    const scale = Math.max(Math.min(tot || 0, rop * 3), rop, 1) * 1.15, fill = Math.min(tot || 0, rop * 3) / scale * 100;
+    const col = { red: 'var(--crit)', amber: 'var(--warn)', green: 'var(--good)', gray: 'var(--gray)' }[st];
+    const tip = `${r.sku} ${r.product}: ${n0(tot)} vs reorder point ${nf0.format(rop)}`;
+    const bar = `<div class="bar" data-t="${esc(tip)}"><i style="width:${fill.toFixed(1)}%;background:${col}"></i>` +
+      `<u style="left:${(rop / scale * 100).toFixed(1)}%"></u></div>`;
+    const check = r.check ? `<div class="note">${esc(r.check)}</div>` : '';
+    return `<tr data-sales="${r.daily.toFixed(4)}" data-urgent="${S_ORDER[st]}" ` +
+      `data-ratio="${(tot !== null && rop ? tot / rop : 1e9).toFixed(4)}" data-sku="${esc(r.sku)}">` +
+      `<td class="sku">${esc(r.sku)}</td><td>${esc(r.product)}</td>` +
+      `<td class="n">${r.daily.toFixed(1)}</td><td class="n">${n0(r.on_hand)}</td>` +
+      `<td class="n">${r.on_the_way ? n0(r.on_the_way) : '–'}</td>` +
+      `<td class="n">${nf0.format(rop)}</td><td class="n">${esc(r.lead_time)}</td>` +
+      `<td>${bar}</td><td>${pill(st)}${check}</td></tr>`;
+  }).join('');
+  return `
+<details class="panel" data-s="${S_CLASS[stock.status]}" id="stock"${dateAttr(stock)}>
+  ${panelHead(stock, pill(stock.status))}
+  <div><div class="big">${esc(stock.headline)}</div><div class="note">of ${stock.table.length} products${stock.sub ? ' · ' + esc(stock.sub) : ''}</div></div>
+  <div class="sortbar" role="group" aria-label="Sort stock table" data-table="stockT">
+    <span class="lbl">Sort</span>
+    <button type="button" data-k="sales" aria-pressed="false">Best sellers</button>
+    <button type="button" data-k="urgent" aria-pressed="true">Most urgent</button>
+    <button type="button" data-k="sku" aria-pressed="false">SKU</button>
+  </div>
+  <div class="legend"><span><span class="sw" style="background:var(--fg);width:2px"></span>Reorder point (daily sales × ${REORDER_DAYS} days)</span><span>Bar = on hand + on the way</span></div>
+  <div class="tablewrap"><table id="stockT">
+    <thead><tr><th>SKU</th><th>Product</th><th class="n">Sold / day</th><th class="n">On hand</th>
+    <th class="n">On the way</th><th class="n">Reorder pt</th><th class="n">Lead time</th>
+    <th style="min-width:130px">Stock vs reorder point</th><th>Status</th></tr></thead>
+    <tbody>${trs}</tbody></table></div>
+  ${unmatchedList(unmatched)}
+  <p class="bands">Green more than ${BUFFER_DAYS} days of sales above the reorder point · Amber within ${BUFFER_DAYS} days · Red at or below the reorder point</p>
+  ${meta(stock, 'Last run', stock.as_of, '3PL stock export · Amazon and Shopify sales · supplier orders', 'Today 06:00')}
+  ${rowsRead(NEEDS.stock)}
+</div></details>`;
+}
+
+function adsPanel(ads) {
+  const rows = [...(ads.table || [])].sort((a, b) => (S_ORDER[a.status] - S_ORDER[b.status]) ||
+    (-(a.pct !== null ? a.pct : 1e9)) - (-(b.pct !== null ? b.pct : 1e9)));
+  const trs = rows.map(r =>
+    `<tr data-worst="${(r.pct !== null ? r.pct : -1).toFixed(4)}" data-spend="${(r.ad_spend || 0).toFixed(2)}" ` +
+    `data-contrib="${r.contribution.toFixed(2)}" data-name="${esc(r.product)}" data-nounits="${r.units <= 0 ? 1 : 0}">` +
+    `<td>${esc(r.product)}<div class="sku">${esc(r.sku)}</div></td>` +
+    `<td class="n">${n0(r.units)}</td><td class="n">${money(r.contribution)}</td>` +
+    `<td class="n">${money(r.ad_spend)}</td><td class="n">${pct(r.pct)}</td>` +
+    `<td>${pill(r.status)}${r.check ? '<div class=note>' + esc(r.check) + '</div>' : ''}</td></tr>`).join('');
+  return `
+<details class="panel" data-s="${S_CLASS[ads.status]}" id="ads"${dateAttr(ads)}>
+  ${panelHead(ads, pill(ads.status))}
+  <div><div class="big">${esc(ads.headline)} after ads</div><div class="note">${esc(ads.sub || '')}</div></div>
+  <div class="grayblock">${esc(ads.note)}</div>
+  <div class="sortbar" role="group" aria-label="Sort ads table" data-table="adsT">
+    <span class="lbl">Sort</span>
+    <button type="button" data-k="worst" aria-pressed="true">Worst first</button>
+    <button type="button" data-k="spend" aria-pressed="false">Biggest ad spend</button>
+    <button type="button" data-k="contrib" aria-pressed="false">Most contribution</button>
+    <button type="button" data-k="name" aria-pressed="false">Product A–Z</button>
+  </div>
+  <div class="tablewrap"><table id="adsT">
+    <thead><tr><th>Product</th><th class="n">Units</th><th class="n">Contribution</th>
+    <th class="n">Ad spend (est.)</th><th class="n">Ad spend % of contribution</th><th>Status</th></tr></thead>
+    <tbody>${trs}</tbody></table></div>
+  <p class="bands">Green ad spend under 50% of contribution · Amber 50–100% · Red over 100% (losing money after ads)</p>
+  ${meta(ads, 'Covers', ads.as_of.replace('Covers ', ''), 'BidWorks report · product margins')}
+  ${rowsRead(NEEDS.ads)}
+</div></details>`;
+}
+
+function cashPanel(cash) {
+  return `
+<details class="panel" data-s="gray" id="cash">
+  ${panelHead(cash, pill('gray'))}
+  <div class="grayblock">${esc(cash.note)}</div>
+  <p class="bands">Green covers 8+ weeks of payments due · Amber 4–8 weeks · Red under 4 weeks</p>
+  ${meta(cash, 'Last run', 'never', 'none')}
+</div></details>`;
+}
+
+function missingPanel(id, card, err) {
+  // A card whose tables did not load: no numbers at all, never a zero.
+  const names = err instanceof MissingData ? err.keys.map(k => TABLES[k] + (ERR[k] ? ` (${ERR[k]})` : '')).join(', ') : String(err);
+  return `
+<details class="panel" data-s="gray" id="${id}">
+  ${panelHead(Object.assign({}, card, { status: 'gray' }), pill('gray'))}
+  <div class="grayblock err">Missing data: ${esc(names)}</div>
+  ${rowsRead(NEEDS[id])}
+</div></details>`;
+}
+
+function dateAttr(card) {
+  const d = card.data_date || (card.stale_rule === 'daily' ? card.stale_ref : null);
+  return d ? ` data-date="${d}"` : '';
+}
+
+function tile(label, big, note, status, card, target) {
+  return `<a class="tile" href="#${target}" data-s="${S_CLASS[status]}"${dateAttr(card)}><div class="lbl">${esc(label)}</div>` +
+    `<div class="big">${esc(big)}</div><div class="note">${esc(note)}${staleTag(card)}</div>${pill(status)}</a>`;
+}
+
+function attempt(fn) { try { return { card: fn() }; } catch (e) { if (!(e instanceof MissingData)) console.error(e); return { err: e }; } }
+
+function render() {
+  const rev = attempt(metricRevenue), stock = attempt(metricStock), ads = attempt(metricAds), cash = metricCash();
+  const um = attempt(unmatchedCodes);
+  const unmatched = um.card || null;
+  const missing = { owner: '', refresh: '' };
+  const r = rev.card, s = stock.card, a = ads.card;
+  const nStock = s ? s.table.length : 0, nAds = a ? (a.table || []).length : 0;
+  const tiles = [
+    r ? tile('Revenue vs last year', r.headline, `${money(r.this_year)} vs ${money(r.last_year)}`, r.status, r, 'rev')
+      : tile('Revenue vs last year', '–', 'Missing data', 'gray', missing, 'rev'),
+    s ? tile('Stock running low', s.headline, `of ${nStock} products` + (s.sub ? ` · ${s.sub}` : ''), s.status, s, 'stock')
+      : tile('Stock running low', '–', 'Missing data', 'gray', missing, 'stock'),
+    a ? tile('Ads: losing money after ads', `${(a.table || []).filter(x => x.status === 'red').length} of ${nAds}`,
+      `products · ${a.as_of.replace('Covers ', '')} · estimate`, a.status, a, 'ads')
+      : tile('Ads: losing money after ads', '–', 'Missing data', 'gray', missing, 'ads'),
+    tile('Cash cover', '–', 'Waiting on a bank feed', 'gray', cash, 'cash'),
+  ].join('');
+  let salesTo = null, snap = null;
+  try { salesTo = fmtdM(lastSalesDate()); } catch (e) { /* shown as – */ }
+  try { snap = snapshotTs() ? fmtdM(snapshotTs().slice(0, 10)) : null; } catch (e) { /* shown as – */ }
+  document.getElementById('realDates').textContent = ` · Sales to ${salesTo || '–'} · Stock at ${snap || '–'}`;
+  const failed = Object.keys(TABLES).filter(k => ERR[k]);
+  document.getElementById('loadErr').innerHTML = failed.length
+    ? `<div class="grayblock err">${failed.length} of ${Object.keys(TABLES).length} tables did not load: ` +
+      failed.map(k => `${esc(TABLES[k])} (${esc(ERR[k])})`).join(' · ') + '</div>' : '';
+  document.getElementById('strip').innerHTML = tiles;
+  document.getElementById('panels').innerHTML =
+    (r ? revenuePanel(r) : missingPanel('rev', { title: 'Revenue vs last year', kind: '', owner: 'Marisa' }, rev.err)) +
+    (s ? stockPanel(s, unmatched) : missingPanel('stock', { title: 'Stock running low', kind: '', owner: 'Marco' }, stock.err)) +
+    (a ? adsPanel(a) : missingPanel('ads', { title: 'Ads: contribution after ads', kind: '', owner: 'Priya' }, ads.err)) +
+    cashPanel(cash);
+  document.getElementById('otherRows').innerHTML = rowsRead(NEEDS.other).replace('Rows read', 'Rows read, cross-check tables');
+}
+
+// ---------------------------------------------------------------- interaction (unchanged)
+function wire(){
+
+// DEMO_MODE: pretend the data refreshes daily. No STALE labels, last-run times follow
+// simulated today. Set to false to judge STALE against the real data dates.
+const DEMO_MODE = true;
+const D=(y,m,d)=>new Date(y,m,d);
+const iso=s=>{const [y,m,d]=s.split('-').map(Number);return D(y,m-1,d||1)};
+const now=new Date(), realDay=D(now.getFullYear(),now.getMonth(),now.getDate());
+// Q4: page date fixed at Fri 3 Apr 2026 (no longer moves with the real date)
+const SIM_START=iso('2026-04-03');
+const shift=0;
+const today=D(SIM_START.getFullYear(),SIM_START.getMonth(),SIM_START.getDate()+shift);
+const WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+document.getElementById('today').textContent=`${WD[today.getDay()]} ${String(today.getDate()).padStart(2,'0')} ${MO[today.getMonth()]} ${today.getFullYear()}`;
+document.querySelectorAll('.demo-only').forEach(el=>el.hidden=!DEMO_MODE);
+document.querySelectorAll('.real-only').forEach(el=>el.hidden=DEMO_MODE);
+if(DEMO_MODE)document.querySelectorAll('[data-demo]').forEach(el=>el.textContent=el.dataset.demo);
+document.querySelectorAll('.stale[data-rule]').forEach(el=>{
+  if(DEMO_MODE){el.hidden=true;return}
+  let stale;
+  if(el.dataset.rule==='daily'){const need=D(today.getFullYear(),today.getMonth(),today.getDate()-Number(el.dataset.lag));stale=iso(el.dataset.ref)<need}
+  else{const [y,m]=el.dataset.ref.split('-').map(Number);const prev=D(today.getFullYear(),today.getMonth()-1,1);stale=y*12+m<prev.getFullYear()*12+prev.getMonth()+1}
+  el.hidden=!stale});
+document.querySelectorAll('[data-date]').forEach(el=>{if(iso(el.dataset.date)>today)el.hidden=true});
+const panels=[...document.querySelectorAll('details.panel')], toggleAll=document.getElementById('toggleAll');
+const syncToggle=()=>{toggleAll.textContent=panels.every(d=>d.open)?'Collapse all':'Expand all'};
+toggleAll.addEventListener('click',()=>{const open=!panels.every(d=>d.open);panels.forEach(d=>d.open=open);syncToggle()});
+panels.forEach(d=>d.addEventListener('toggle',syncToggle));
+function openPanel(id){const d=document.getElementById(id);if(!d)return;d.open=true;d.scrollIntoView({behavior:'smooth',block:'start'})}
+document.querySelectorAll('a.tile').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const id=a.getAttribute('href').slice(1);history.replaceState(null,'','#'+id);openPanel(id)}));
+if(location.hash)openPanel(location.hash.slice(1));
+const tip=document.getElementById('tip');
+function showTip(e,t){tip.textContent=t;tip.hidden=false;tip.style.left=Math.min(e.clientX+12,innerWidth-220)+'px';tip.style.top=(e.clientY+12)+'px'}
+document.querySelectorAll('[data-t]').forEach(el=>{el.addEventListener('mousemove',e=>showTip(e,el.dataset.t));el.addEventListener('mouseleave',()=>tip.hidden=true)});
+const sorters={
+  sales:(a,b)=>b.dataset.sales-a.dataset.sales,
+  urgent:(a,b)=>(a.dataset.urgent-b.dataset.urgent)||(a.dataset.ratio-b.dataset.ratio),
+  sku:(a,b)=>a.dataset.sku.localeCompare(b.dataset.sku),
+  worst:(a,b)=>b.dataset.worst-a.dataset.worst,
+  spend:(a,b)=>b.dataset.spend-a.dataset.spend,
+  contrib:(a,b)=>b.dataset.contrib-a.dataset.contrib,
+  name:(a,b)=>a.dataset.name.localeCompare(b.dataset.name)};
+// rows with no units sink to the bottom of every ads sort except A-Z
+const noUnitsLast=(k,f)=>k==='name'?f:(a,b)=>((a.dataset.nounits||0)-(b.dataset.nounits||0))||f(a,b);
+function sortTable(bar,k){const tb=document.querySelector('#'+bar.dataset.table+' tbody');
+  [...tb.rows].sort(noUnitsLast(k,sorters[k])).forEach(r=>tb.appendChild(r));
+  bar.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k?'true':'false'))}
+document.querySelectorAll('.sortbar').forEach(bar=>{
+  bar.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>sortTable(bar,b.dataset.k)));
+  sortTable(bar,bar.querySelector('[aria-pressed="true"]').dataset.k)});
+
+}
+loadAll().then(render).then(wire);
+</script>
+</body></html>
