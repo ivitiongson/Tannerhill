@@ -45,8 +45,24 @@ h2{font-size:17px;margin:0 0 10px}
 .tilerow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:12px}
 .tilehead{font-size:12px;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.04em;margin:0 0 6px}
 @media (max-width:700px){.tilerow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tilesplit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,4fr);gap:10px 24px}
+.tilesplit .tilerow.n1{grid-template-columns:minmax(0,1fr)}
+.tilesplit .tilerow.n4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.tilesplit > div + div{border-left:1px solid var(--border);padding-left:24px}
+@media (max-width:700px){.tilesplit{grid-template-columns:1fr}.tilesplit > div + div{border-left:0;padding-left:0}.tilesplit .tilerow.n4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;cursor:pointer;text-align:left;font:inherit;color:inherit}
 .tile:hover{border-color:var(--accent)}
+.tile.active{border-color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent);background:var(--surface-2)}
+.tile.active .v{color:var(--accent)}
+/* light tints: Never replied and the urgency tiles (kept when the tile is picked) */
+.tile.t-nr{background:var(--banner-bg);border-color:#f0dfa8}
+.tile.t-u-vh{background:var(--crit-bg);border-color:#f3c9c9}
+.tile.t-u-h{background:var(--serious-bg);border-color:#f6d5c6}
+.tile.t-u-n{background:var(--norm-bg)}
+.tile.t-u-l{background:var(--good-bg);border-color:#c5e6c5}
+.tile.active[class*=" t-"]{border-color:var(--accent)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .tile[class*=" t-"]:not(.active){border-color:var(--border)}}
+:root[data-theme="dark"] .tile[class*=" t-"]:not(.active){border-color:var(--border)}
 .tile .v{font-size:26px;font-weight:700;line-height:1.1}
 .tile .l{color:var(--ink-2);font-size:13px;display:flex;align-items:center;gap:6px}
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:14px}
@@ -73,6 +89,16 @@ tr.detail td{background:var(--surface-2)}
 .closed{background:var(--good-bg)} .closed .dot{background:var(--good)}
 .flag{display:inline-block;font-size:12px;border:1px solid var(--border);border-radius:6px;padding:1px 6px;margin:1px 2px 1px 0}
 .flag.threat{border-color:var(--crit);font-weight:700}
+tr.pinned td:first-child{box-shadow:inset 4px 0 0 var(--crit)}
+.pinmark{display:inline-block;margin-top:3px;font-size:11px;font-weight:700;color:#fff;background:var(--crit);border-radius:4px;padding:1px 5px;white-space:nowrap}
+.threatcard{border:1px solid var(--crit);box-shadow:inset 4px 0 0 var(--crit)}
+.threatcard h2{color:var(--crit);display:flex;align-items:center;gap:8px}
+.threatcard .count{background:var(--crit);color:#fff;border-radius:999px;font-size:12px;padding:1px 8px}
+.threatcard tbody tr{cursor:pointer}
+.threatcard tbody tr.detail{cursor:default}
+.threatcard tbody tr.detail:hover{background:none}
+.threatcard tbody tr:hover{background:var(--crit-bg)}
+.threatcard .threat{font-weight:600}
 .unsure{color:var(--ink-2);font-style:italic}
 .muted{color:var(--ink-3)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
@@ -111,6 +137,15 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
 <section id="tab-inbox">
   <div class="tiles" id="tiles"></div>
 
+  <div class="card threatcard" id="threatCard">
+    <h2>Threats (open) <span class="count" id="threatCount">0</span></h2>
+    <p class="note" style="margin:0 0 8px">Every open case flagged THREAT, even after a reply. A case leaves this list only when a person closes it. Urgency still shows response time only. Click a row to open it here: read the message, reassign or close the case. Changes show in the main table too.</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>ID</th><th>Threat</th><th>In charge</th><th>Flag to</th><th>Urgency</th><th>Days open</th><th>Case</th></tr></thead>
+      <tbody id="threatBody"></tbody>
+    </table></div>
+  </div>
+
   <div class="card">
     <div class="filters">
       <label>Search<input id="fSearch" placeholder="ID, order #, text…"></label>
@@ -127,7 +162,7 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
 
   <div class="card">
     <div class="note" id="countLine" style="margin-bottom:4px"></div>
-    <div class="note" style="margin-bottom:8px"><b>Note on urgency:</b> Normal, High and Very High are only for emails we have not responded to. Anything we've replied to shows <b>Low: Responded</b>, with who replied and when (from "Answered by"). If that's missing it says "Unsure, data unavailable". Follow-up replies and the customer's answers aren't recorded yet, so check Low cases before closing them.</div>
+    <div class="note" style="margin-bottom:8px"><b>Note on urgency:</b> Normal, High and Very High are only for emails we have not responded to. Anything we've replied to shows <b>Low: Responded</b>, with who replied and when (from "Answered by"). If that's missing it says "Unsure, data unavailable". Follow-up replies and the customer's answers aren't recorded yet, so check Low cases before closing them.<br><b>Threats:</b> open cases flagged THREAT are listed in the red Threats box above and pinned to the top of this table (red marker), even after a reply, until a person closes them.</div>
     <div class="tablewrap">
       <table>
         <thead><tr>
@@ -196,7 +231,7 @@ footer{color:var(--ink-3);font-size:12px;margin:20px 0}
         <span class="pill u-n"><span class="dot"></span>Normal</span> not responded, 0–12 h ·
         <span class="pill u-h"><span class="dot"></span>High</span> not responded, more than 12, up to 36 h ·
         <span class="pill u-vh"><span class="dot"></span>Very High</span> not responded, more than 36 h<br>
-        Threats sit in Flags and never change urgency.<br>Follow-up replies aren't recorded yet, so check Low: Responded cases before closing them.</dd>
+        Threats sit in Flags and never change urgency. Open THREAT cases are listed in the Threats box and pinned to the top of the Inbox table until a person closes them.<br>Follow-up replies aren't recorded yet, so check Low: Responded cases before closing them.</dd>
       <dt>Case opened</dt><dd>Date and time of the customer's first email in the conversation.</dd>
       <dt>Days open</dt><dd>Calendar days from Case opened until a person closes the case.</dd>
       <dt>Missing info</dt><dd>Warranty and returns only (D08-05): order number (or name + delivery ZIP) · delivery date · photos (fault + whole item; cooking surface for cast iron) · what happened (cast iron: washing and storage too).</dd>
@@ -332,7 +367,7 @@ fillSelect($('#fCat'), [...new Set(DATA.flatMap(r=>cats(r.category)))].sort());
 fillSelect($('#fUrg'), ['Very High','High','Normal','Low: Responded']);
 fillSelect($('#fFlag'), ['THREAT','NEVER ANSWERED','UPSET / REPEAT','TWO TOPICS','POLICY CHANGE','UNSURE','NOTE']);
 
-let sortKey = 'urgency', sortDir = 1, openRow = null;
+let sortKey = 'urgency', sortDir = 1, openRow = null, threatOpen = null;
 
 function filtered(){
   const q = $('#fSearch').value.trim().toLowerCase();
@@ -347,9 +382,35 @@ function filtered(){
     (!cs || (cs==='Closed') === !!closes[r.id])
   );
 }
+// Open THREAT cases are listed in the Threats box AND pinned to the top of the main table until a person closes them. Urgency is not changed.
+const isOpenThreat = r => !closes[r.id] && flagList(r.flags).some(f=>flagKey(f)==='THREAT');
+function renderThreats(){
+  const rows = DATA.filter(isOpenThreat).sort((a,b)=>(urgRank[urgLevel(liveUrg(a))]-urgRank[urgLevel(liveUrg(b))]) || (daysOpen(b)-daysOpen(a)));
+  $('#threatCount').textContent = rows.length;
+  const tb = $('#threatBody'); tb.innerHTML = '';
+  if(!rows.length){ tb.innerHTML = '<tr><td colspan="7" class="muted">No open threats</td></tr>'; return; }
+  rows.forEach(r=>{
+    const what = flagList(r.flags).filter(f=>flagKey(f)==='THREAT')
+      .map(f=>f.replace(/^THREAT:\s*/i,'').replace(/,?\s*flag to Lena\.?$/i,'')).join('; ');
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td><b>${esc(r.id)}</b></td><td class="threat">${esc(what)}</td><td>${esc(ownerOf(r))}</td>
+      <td>Lena <span class="muted">(cover: Marco)</span></td><td>${urgPill(liveUrg(r))}</td><td>${daysOpen(r).toFixed(1)}</td>
+      <td><span class="muted">Open</span></td>`;
+    tr.onclick = ()=>{ threatOpen = threatOpen===r.id?null:r.id; render(); };
+    tb.appendChild(tr);
+    if(threatOpen===r.id){
+      const d = document.createElement('tr'); d.className='detail';
+      d.innerHTML = detailCell(r, 7);
+      d.onclick = e => e.stopPropagation();
+      tb.appendChild(d);
+    }
+  });
+}
 function sorted(rows){
   const k = sortKey;
   return rows.slice().sort((a,b)=>{
+    const pa=isOpenThreat(a), pb=isOpenThreat(b);
+    if(pa!==pb) return pa?-1:1;
     let x, y;
     if(k==='urgency'){ x=urgRank[urgLevel(liveUrg(a))]; y=urgRank[urgLevel(liveUrg(b))]; if(x===y){x=-daysOpen(a);y=-daysOpen(b);} }
     else if(k==='caseOpened'){ x=startOf(a); y=startOf(b); }
@@ -361,6 +422,10 @@ function sorted(rows){
 }
 
 /* ---------- tiles ---------- */
+// Tile filters: a tile is highlighted when the filters match exactly what it sets. Click it again to clear.
+const FKEYS = ['fFolder','fOwner','fCat','fUrg','fFlag','fCase'];
+const T = o => Object.assign(()=>setF(o), {f:o});
+const isActive = o => !$('#fSearch').value.trim() && FKEYS.every(k=>$('#'+k).value===(o[k]||''));
 function renderTiles(){
   const open = DATA.filter(r=>!closes[r.id]);
   const n = (fn)=>open.filter(fn).length;
@@ -368,34 +433,38 @@ function renderTiles(){
   const folders = ['amazon','kickstarter','shared-inbox'].concat([...new Set(DATA.map(r=>r.folder).filter(f=>f && !['amazon','kickstarter','shared-inbox'].includes(f)))].sort());
   const rows = [
     ['Open cases', [
-      ['Open cases', open.length, '', ()=>setF({fCase:'Open'})],
+      ['Open cases', open.length, '', T({fCase:'Open'})],
+    ]],
+    ['Never replied', [
+      ['Never replied', n(r=>/NEVER ANSWERED/.test(r.flags)), '', T({fFlag:'NEVER ANSWERED',fCase:'Open'})],
     ]],
     ['Urgency', [
-      ['Very High', n(r=>urgLevel(liveUrg(r))==='Very High'), 'u-vh', ()=>setF({fUrg:'Very High',fCase:'Open'})],
-      ['High', n(r=>urgLevel(liveUrg(r))==='High'), 'u-h', ()=>setF({fUrg:'High',fCase:'Open'})],
-      ['Normal', n(r=>urgLevel(liveUrg(r))==='Normal'), 'u-n', ()=>setF({fUrg:'Normal',fCase:'Open'})],
-      ['Low: Responded', n(r=>urgLevel(liveUrg(r))==='Low: Responded'), 'u-l', ()=>setF({fUrg:'Low: Responded',fCase:'Open'})],
-    ]],
-    ['Needs attention', [
-      ['Never answered', n(r=>/NEVER ANSWERED/.test(r.flags)), '', ()=>setF({fFlag:'NEVER ANSWERED',fCase:'Open'})],
-      ['Threats', n(r=>/THREAT/.test(r.flags)), '', ()=>setF({fFlag:'THREAT',fCase:'Open'})],
+      ['Very High', n(r=>urgLevel(liveUrg(r))==='Very High'), 'u-vh', T({fUrg:'Very High',fCase:'Open'})],
+      ['High', n(r=>urgLevel(liveUrg(r))==='High'), 'u-h', T({fUrg:'High',fCase:'Open'})],
+      ['Normal', n(r=>urgLevel(liveUrg(r))==='Normal'), 'u-n', T({fUrg:'Normal',fCase:'Open'})],
+      ['Low: Responded', n(r=>urgLevel(liveUrg(r))==='Low: Responded'), 'u-l', T({fUrg:'Low: Responded',fCase:'Open'})],
     ]],
     ['In charge', [
-      ['Marco', n(r=>ownerOf(r)==='Marco'), '', ()=>setF({fOwner:'Marco',fCase:'Open'})],
-      ['Lena', n(r=>ownerOf(r)==='Lena'), '', ()=>setF({fOwner:'Lena',fCase:'Open'})],
-      ['Priya', n(r=>ownerOf(r)==='Priya'), '', ()=>setF({fOwner:'Priya',fCase:'Open'})],
-      ['Owner UNSURE', n(r=>ownerOf(r).startsWith('UNSURE')), '', ()=>setF({fOwner:'UNSURE',fCase:'Open'})],
+      ['Marco', n(r=>ownerOf(r)==='Marco'), '', T({fOwner:'Marco',fCase:'Open'})],
+      ['Lena', n(r=>ownerOf(r)==='Lena'), '', T({fOwner:'Lena',fCase:'Open'})],
+      ['Priya', n(r=>ownerOf(r)==='Priya'), '', T({fOwner:'Priya',fCase:'Open'})],
+      ['Owner UNSURE', n(r=>ownerOf(r).startsWith('UNSURE')), '', T({fOwner:'UNSURE',fCase:'Open'})],
     ]],
-    ['Channel', folders.map(f=>[FOLDER_LABEL[f]||f, n(r=>r.folder===f), '', ()=>setF({fFolder:f,fCase:'Open'})])],
+    ['Channel', folders.map(f=>[FOLDER_LABEL[f]||f, n(r=>r.folder===f), '', T({fFolder:f,fCase:'Open'})])],
   ];
   const el = $('#tiles'); el.innerHTML='';
+  // "Open cases", "Never replied" and "Urgency" share one line, each with its own heading
+  const split = document.createElement('div'); split.className='tilesplit'; el.appendChild(split);
   rows.forEach(([title,tiles])=>{
-    const h = document.createElement('div'); h.className='tilehead'; h.textContent=title; el.appendChild(h);
-    const g = document.createElement('div'); g.className='tilerow'; el.appendChild(g);
+    let box = el;
+    if(title==='Open cases' || title==='Never replied' || title==='Urgency'){ box = document.createElement('div'); split.appendChild(box); }
+    const h = document.createElement('div'); h.className='tilehead'; h.textContent=title; box.appendChild(h);
+    const g = document.createElement('div'); g.className='tilerow'+(box===el?'':' n'+tiles.length); box.appendChild(g);
     tiles.forEach(([l,v,cls,fn])=>{
-      const b = document.createElement('button'); b.className='tile'; b.type='button';
+      const b = document.createElement('button'); b.className='tile'+(cls?' t-'+cls:(l==='Never replied'?' t-nr':'')); b.type='button';
       b.innerHTML = `<div class="v">${v}</div><div class="l">${cls?`<span class="pill ${cls}" style="padding:0 4px"><span class="dot"></span></span>`:''}${esc(l)}</div>`;
-      b.onclick = fn; g.appendChild(b);
+      const on = isActive(fn.f); if(on) b.classList.add('active'); b.setAttribute('aria-pressed', on?'true':'false');
+      b.onclick = on ? ()=>setF({}) : fn; g.appendChild(b);
     });
   });
 }
@@ -405,27 +474,10 @@ function setF(o){
   render();
 }
 
-/* ---------- table ---------- */
-function render(){
-  $('#timeLine').textContent = `Last sorted ${fmtDT(new Date(RUN_TIME))} · Times as of ${fmtDT(asOf())}${($('#fAsOf').value==='run'||!PRETEND)?'':' (pretend date)'}`;
-  renderTiles();
-  const rows = sorted(filtered());
-  $('#countLine').textContent = `Showing ${rows.length} of ${DATA.length} messages · click a row for the message, missing info and close button`;
-  const tb = $('#tbody'); tb.innerHTML = '';
-  rows.forEach(r=>{
-    const c = closes[r.id];
-    const tr = document.createElement('tr'); tr.className='row';
-    tr.innerHTML = `<td><b>${esc(r.id)}</b></td><td>${esc(r.channel)}</td><td>${esc(r.order)}</td>
-      <td class="${r.category.startsWith('UNSURE')?'unsure':''}">${esc(r.category)}</td>
-      <td class="${ownerOf(r).startsWith('UNSURE')?'unsure':''}">${esc(ownerOf(r))}${assigns[r.id]?`<div class="muted" style="font-size:12px">reassigned from ${esc(r.owner)}</div>`:''}</td>
-      <td>${urgPill(liveUrg(r))}</td><td>${esc(String(r.caseOpened||r.received).replace('T',' '))}</td><td>${daysOpen(r).toFixed(1)}</td>
-      <td>${flagsHtml(r.flags)}</td>
-      <td>${c?`<span class="pill closed"><span class="dot"></span>Closed</span>`:'<span class="muted">Open</span>'}</td>`;
-    tr.onclick = ()=>{ openRow = openRow===r.id?null:r.id; render(); };
-    tb.appendChild(tr);
-    if(openRow===r.id){
-      const d = document.createElement('tr'); d.className='detail';
-      d.innerHTML = `<td colspan="10">
+// Detail panel (message, reassign, close). Used by the main table and the Threats box.
+function detailCell(r, cols){
+  const c = closes[r.id];
+  return `<td colspan="${cols}">
         <div class="grid2">
           <div>
             <div class="note">Received ${esc(String(r.received).replace('T',' '))} ET${r.folder?` · ${esc(r.folder)}`:''} · ${esc(r.subject)}</div>
@@ -449,18 +501,42 @@ function render(){
                    </div>`}
           </div>
         </div></td>`;
+}
+
+/* ---------- table ---------- */
+function render(){
+  $('#timeLine').textContent = `Last sorted ${fmtDT(new Date(RUN_TIME))} · Times as of ${fmtDT(asOf())}${($('#fAsOf').value==='run'||!PRETEND)?'':' (pretend date)'}`;
+  renderTiles();
+  renderThreats();
+  const rows = sorted(filtered());
+  $('#countLine').textContent = `Showing ${rows.length} of ${DATA.length} messages · click a row for the message, missing info and close button`;
+  const tb = $('#tbody'); tb.innerHTML = '';
+  rows.forEach(r=>{
+    const c = closes[r.id];
+    const tr = document.createElement('tr'); tr.className='row'+(isOpenThreat(r)?' pinned':'');
+    tr.innerHTML = `<td><b>${esc(r.id)}</b>${isOpenThreat(r)?'<br><span class="pinmark">THREAT · pinned</span>':''}</td><td>${esc(r.channel)}</td><td>${esc(r.order)}</td>
+      <td class="${r.category.startsWith('UNSURE')?'unsure':''}">${esc(r.category)}</td>
+      <td class="${ownerOf(r).startsWith('UNSURE')?'unsure':''}">${esc(ownerOf(r))}${assigns[r.id]?`<div class="muted" style="font-size:12px">reassigned from ${esc(r.owner)}</div>`:''}</td>
+      <td>${urgPill(liveUrg(r))}</td><td>${esc(String(r.caseOpened||r.received).replace('T',' '))}</td><td>${daysOpen(r).toFixed(1)}</td>
+      <td>${flagsHtml(r.flags)}</td>
+      <td>${c?`<span class="pill closed"><span class="dot"></span>Closed</span>`:'<span class="muted">Open</span>'}</td>`;
+    tr.onclick = ()=>{ openRow = openRow===r.id?null:r.id; render(); };
+    tb.appendChild(tr);
+    if(openRow===r.id){
+      const d = document.createElement('tr'); d.className='detail';
+      d.innerHTML = detailCell(r, 10);
       d.onclick = e => e.stopPropagation();
       tb.appendChild(d);
     }
   });
   document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{
     const id=b.dataset.close;
-    const by=document.querySelector(`[data-by="${id}"]`).value, date=document.querySelector(`[data-date="${id}"]`).value;
+    const box=b.closest('td'), by=box.querySelector(`[data-by="${id}"]`).value, date=box.querySelector(`[data-date="${id}"]`).value;
     if(!date) return;
     closes[id]={by,date}; save(closes); render();
   });
   document.querySelectorAll('[data-assign]').forEach(b=>b.onclick=()=>{
-    const id=b.dataset.assign, to=document.querySelector(`[data-as="${id}"]`).value, r=DATA.find(x=>x.id===id);
+    const id=b.dataset.assign, to=b.closest('td').querySelector(`[data-as="${id}"]`).value, r=DATA.find(x=>x.id===id);
     if(to===r.owner){ delete assigns[id]; } else { assigns[id]={to,date:ymd(NOW)}; }
     saveA(assigns); render();
   });
